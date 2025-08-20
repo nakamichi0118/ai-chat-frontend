@@ -16,6 +16,7 @@ let companyKnowledge = [];
 let isKnowledgeEnabled = false;
 let isVoiceEnabled = false;
 let isSpeakEnabled = false;
+let isPersonalityEnabled = false; // アイユーくん人格機能（デフォルトOFF）
 
 // 音声認識と合成
 let recognition = null;
@@ -541,6 +542,7 @@ async function sendMessage() {
             model: selectedModel,
             history: messages.slice(-10),
             useKnowledge: Boolean(isKnowledgeEnabled),
+            usePersonality: Boolean(isPersonalityEnabled),
             userProfile: userProfile,
             files: attachedFiles // 添付ファイルを含める
         };
@@ -1220,6 +1222,23 @@ window.toggleSpeak = function() {
     localStorage.setItem('speakEnabled', isSpeakEnabled);
 }
 
+window.togglePersonality = function() {
+    isPersonalityEnabled = !isPersonalityEnabled;
+    const btn = document.getElementById('personalityToggle');
+    
+    console.log('人格トグル:', isPersonalityEnabled);
+    
+    if (isPersonalityEnabled) {
+        btn.classList.add('active');
+        console.log('✅ アイユーくん人格モード: ON');
+    } else {
+        btn.classList.remove('active');
+        console.log('⚪ アイユーくん人格モード: OFF');
+    }
+    
+    localStorage.setItem('personalityEnabled', String(isPersonalityEnabled));
+}
+
 // 音声認識の初期化
 function initializeSpeechRecognition() {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
@@ -1330,15 +1349,17 @@ function speakText(text) {
 
 // 初期設定の復元 - initializeApp内に統合
 function restoreSettings() {
-    // 保存された設定を復元（ナレッジはデフォルトOFF）
+    // 保存された設定を復元（ナレッジ・人格はデフォルトOFF）
     const knowledgeEnabled = localStorage.getItem('knowledgeEnabled') === 'true';
     const voiceEnabled = localStorage.getItem('voiceEnabled') === 'true';
     const speakEnabled = localStorage.getItem('speakEnabled') === 'true';
+    const personalityEnabled = localStorage.getItem('personalityEnabled') === 'true';
     
     console.log('初期設定復元:');
     console.log('  ナレッジ:', knowledgeEnabled);
     console.log('  音声:', voiceEnabled);
     console.log('  読み上げ:', speakEnabled);
+    console.log('  人格:', personalityEnabled);
     
     // 直接状態を設定（イベントループを避けるため）
     // ナレッジ設定
@@ -1379,10 +1400,22 @@ function restoreSettings() {
         }
     }
     
+    // 人格設定
+    isPersonalityEnabled = personalityEnabled;
+    const personalityBtn = document.getElementById('personalityToggle');
+    if (personalityBtn) {
+        if (personalityEnabled) {
+            personalityBtn.classList.add('active');
+        } else {
+            personalityBtn.classList.remove('active');
+        }
+    }
+    
     // ローカルストレージに保存
     localStorage.setItem('knowledgeEnabled', knowledgeEnabled);
     localStorage.setItem('voiceEnabled', voiceEnabled);
     localStorage.setItem('speakEnabled', speakEnabled);
+    localStorage.setItem('personalityEnabled', personalityEnabled);
 }
 
 // ステータス設定
