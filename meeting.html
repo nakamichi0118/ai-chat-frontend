@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI議事録作成システム</title>
+    <link rel="stylesheet" href="meeting-styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- ヘッダー -->
+        <header class="header">
+            <h1>🎙️ AI議事録作成システム</h1>
+            <div class="header-actions">
+                <button onclick="window.location.href='index.html'" class="btn-secondary">💬 チャットに戻る</button>
+            </div>
+        </header>
+
+        <!-- メインコンテンツ -->
+        <div class="main-content">
+            <!-- 左側：録音・入力エリア -->
+            <div class="recording-panel">
+                <div class="meeting-info">
+                    <h2>会議情報</h2>
+                    <div class="form-group">
+                        <label>会議名:</label>
+                        <input type="text" id="meetingTitle" placeholder="例: 週次定例会議">
+                    </div>
+                    <div class="form-group">
+                        <label>日時:</label>
+                        <input type="datetime-local" id="meetingDateTime">
+                    </div>
+                    <div class="form-group">
+                        <label>参加者:</label>
+                        <div class="participants-list" id="participantsList">
+                            <div class="participant-item">
+                                <input type="text" placeholder="参加者名" class="participant-name">
+                                <button class="btn-remove" onclick="removeParticipant(this)">×</button>
+                            </div>
+                        </div>
+                        <button class="btn-add" onclick="addParticipant()">+ 参加者追加</button>
+                    </div>
+                </div>
+
+                <div class="recording-controls">
+                    <h2>録音コントロール</h2>
+                    <div class="recording-status">
+                        <div class="status-indicator" id="statusIndicator">
+                            <span class="status-dot"></span>
+                            <span class="status-text">待機中</span>
+                        </div>
+                        <div class="timer" id="timer">00:00:00</div>
+                    </div>
+
+                    <div class="control-buttons">
+                        <button class="btn-record" id="recordBtn" onclick="toggleRecording()">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <circle cx="12" cy="12" r="10" fill="currentColor"/>
+                            </svg>
+                            <span>録音開始</span>
+                        </button>
+                        <button class="btn-pause" id="pauseBtn" onclick="pauseRecording()" disabled>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <rect x="6" y="4" width="4" height="16" fill="currentColor"/>
+                                <rect x="14" y="4" width="4" height="16" fill="currentColor"/>
+                            </svg>
+                            <span>一時停止</span>
+                        </button>
+                        <button class="btn-stop" id="stopBtn" onclick="stopRecording()" disabled>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <rect x="6" y="6" width="12" height="12" fill="currentColor"/>
+                            </svg>
+                            <span>停止</span>
+                        </button>
+                    </div>
+
+                    <div class="audio-visualizer">
+                        <canvas id="visualizer" width="400" height="100"></canvas>
+                    </div>
+                </div>
+
+                <div class="realtime-transcription">
+                    <h3>リアルタイム文字起こし</h3>
+                    <div class="transcription-box" id="realtimeTranscript">
+                        <p class="placeholder">録音を開始すると、ここにリアルタイムで文字起こしが表示されます...</p>
+                    </div>
+                </div>
+
+                <div class="speaker-detection">
+                    <h3>話者識別設定</h3>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="speakerDetection" checked>
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">話者分離を有効にする</span>
+                    </label>
+                    <div class="speaker-mapping" id="speakerMapping" style="display: none;">
+                        <p>話者を検出中...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右側：議事録プレビューエリア -->
+            <div class="minutes-panel">
+                <div class="panel-header">
+                    <h2>議事録プレビュー</h2>
+                    <div class="panel-actions">
+                        <button class="btn-secondary" onclick="generateMinutes()">📝 議事録生成</button>
+                        <button class="btn-secondary" onclick="exportMinutes()">💾 エクスポート</button>
+                    </div>
+                </div>
+
+                <div class="minutes-content" id="minutesContent">
+                    <div class="minutes-placeholder">
+                        <h3>議事録</h3>
+                        <p><strong>会議名:</strong> <span id="minutesTitle">-</span></p>
+                        <p><strong>日時:</strong> <span id="minutesDate">-</span></p>
+                        <p><strong>参加者:</strong> <span id="minutesParticipants">-</span></p>
+                        
+                        <h4>議題</h4>
+                        <ul id="minutesAgenda">
+                            <li>録音後に自動生成されます</li>
+                        </ul>
+
+                        <h4>議論内容</h4>
+                        <div id="minutesDiscussion">
+                            <p>録音内容から自動的に要約されます</p>
+                        </div>
+
+                        <h4>決定事項</h4>
+                        <ul id="minutesDecisions">
+                            <li>AIが重要な決定事項を抽出します</li>
+                        </ul>
+
+                        <h4>アクションアイテム</h4>
+                        <table class="action-items-table">
+                            <thead>
+                                <tr>
+                                    <th>タスク</th>
+                                    <th>担当者</th>
+                                    <th>期限</th>
+                                </tr>
+                            </thead>
+                            <tbody id="minutesActions">
+                                <tr>
+                                    <td colspan="3">録音から自動抽出されます</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h4>次回予定</h4>
+                        <p id="minutesNextMeeting">-</p>
+                    </div>
+                </div>
+
+                <div class="export-options">
+                    <h3>エクスポート形式</h3>
+                    <div class="export-formats">
+                        <button onclick="exportAs('markdown')">📄 Markdown</button>
+                        <button onclick="exportAs('word')">📘 Word</button>
+                        <button onclick="exportAs('pdf')">📕 PDF</button>
+                        <button onclick="exportAs('text')">📝 テキスト</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 録音済みファイルアップロード -->
+        <div class="upload-section">
+            <h3>録音ファイルをアップロード</h3>
+            <div class="upload-area" id="uploadArea">
+                <input type="file" id="audioFile" accept="audio/*" style="display: none;">
+                <div class="upload-content" onclick="document.getElementById('audioFile').click()">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                        <path d="M21 15V19C21 20.1 20.1 21 19 21H5C3.9 21 3 20.1 3 19V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M17 8L12 3L7 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M12 3V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <p>音声ファイルをドラッグ＆ドロップ<br>または<br>クリックして選択</p>
+                    <span class="supported-formats">対応形式: MP3, WAV, M4A, WebM</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- モーダル -->
+    <div class="modal" id="processingModal">
+        <div class="modal-content">
+            <h2>処理中...</h2>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <p id="processingStatus">音声を解析しています...</p>
+        </div>
+    </div>
+
+    <script src="meeting.js"></script>
+</body>
+</html>

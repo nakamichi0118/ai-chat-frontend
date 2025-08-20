@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIチャット (シンプル版)</title>
+    <link rel="stylesheet" href="styles-enhanced.css">
+</head>
+<body>
+    <div class="container">
+        <div class="main-chat" style="width: 100%; margin: 0;">
+            <div class="chat-header">
+                <h1>AIアシスタント (シンプル版)</h1>
+                <span class="status" id="status">● 接続中</span>
+                <button class="reset-btn" onclick="location.reload()" style="margin-left: auto;">リセット</button>
+            </div>
+            
+            <div class="messages" id="messages">
+                <div class="welcome-message">
+                    <h2>こんにちは！</h2>
+                    <p>AIアシスタント（履歴なし版）です。何でもお聞きください。</p>
+                    <p style="color: orange;">⚠️ この画面では会話履歴は保存されません。</p>
+                </div>
+            </div>
+            
+            <div class="input-area">
+                <textarea 
+                    id="messageInput" 
+                    placeholder="メッセージを入力... (Shift+Enterで改行)"
+                    rows="1"
+                ></textarea>
+                <button id="sendButton" onclick="sendMessage()">送信</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
+    <script src="app-simple.js"></script>
+</body>
+</html>

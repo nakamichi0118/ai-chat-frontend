@@ -1,0 +1,43 @@
+// API設定 - サーバー構成対応
+const API_CONFIG = {
+    // 自動判定：ローカル開発 or サーバー環境
+    getBaseUrl: function() {
+        const hostname = window.location.hostname;
+        const protocol = window.location.protocol;
+        
+        // ローカル開発環境
+        if (hostname === 'localhost' || hostname === '127.0.0.1') {
+            return 'http://localhost:3001';
+        }
+        
+        // サーバー環境（リバースプロキシ経由）
+        // /api/* がバックエンドにプロキシされる
+        return `${protocol}//${hostname}`;
+    },
+    
+    // エンドポイント定義
+    endpoints: {
+        chat: '/chat',
+        models: '/models',
+        knowledge: '/knowledge',
+        health: '/health',
+        box: {
+            auth: '/box/auth',
+            callback: '/box/callback',
+            files: '/box/files',
+            import: '/box/import'
+        }
+    },
+    
+    // タイムアウト設定
+    timeout: 30000,
+    
+    // リトライ設定
+    retry: {
+        max: 3,
+        delay: 1000
+    }
+};
+
+// グローバル変数として公開
+window.API_CONFIG = API_CONFIG;

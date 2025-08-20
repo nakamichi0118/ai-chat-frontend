@@ -1,0 +1,1258 @@
+// チャットID生成関数（先に定義）
+function generateChatId() {
+    return 'chat_' + Date.now() + '_' + Math.random().toString(36).substring(2);
+}
+
+// 拡張版 - 履歴保持・社内リソース対応
+let messages = [];
+let currentChatId = generateChatId();
+let chatHistory = {};
+let isGenerating = false;
+let availableModels = [];
+let userProfile = {};
+let companyKnowledge = [];
+
+// 機能フラグ（明確にfalseで初期化）
+let isKnowledgeEnabled = false;
+let isVoiceEnabled = false;
+let isSpeakEnabled = false;
+
+// 音声認識と合成
+let recognition = null;
+let synthesis = window.speechSynthesis;
+let isRecording = false;
+
+// DOM要素（初期化時に設定）
+let messagesDiv;
+let messageInput;
+let sendButton;
+let statusElement;
+let modelSelect;
+
+// 初期化時にローカルストレージから読み込み
+function initializeApp() {
+    console.log('🚀 アプリケーションを初期化中...');
+    
+    // DOM要素を取得
+    messagesDiv = document.getElementById('messages');
+    messageInput = document.getElementById('messageInput');
+    sendButton = document.getElementById('sendButton');
+    statusElement = document.getElementById('status');
+    modelSelect = document.getElementById('modelSelect');
+    
+    // 要素が取得できているか確認
+    if (!messagesDiv || !messageInput || !sendButton) {
+        console.error('❌ 必須のDOM要素が見つかりません');
+        console.error('  messagesDiv:', messagesDiv);
+        console.error('  messageInput:', messageInput);
+        console.error('  sendButton:', sendButton);
+        return;
+    }
+    
+    // データ読み込みを順番に実行
+    loadFromLocalStorage();
+    loadUserProfile();
+    // ナレッジは自動読み込みしない
+    // loadCompanyKnowledge();
+    
+    // モデル読み込みは非同期で実行し、完了を待つ
+    loadModels().then(() => {
+        console.log('モデル読み込み完了:', modelSelect ? modelSelect.value : 'N/A');
+    });
+    
+    checkConnection();
+    
+    // UI要素の初期化を確認
+    initializeUIElements();
+    
+    // イベントリスナーの設定
+    setupEventListeners();
+    
+    // 保存された設定を復元
+    restoreSettings();
+    
+    setInterval(checkConnection, 30000);
+    setInterval(saveToLocalStorage, 10000); // 10秒ごとに自動保存
+    
+    // ウィンドウ閉じる前に保存
+    window.addEventListener('beforeunload', saveToLocalStorage);
+    
+    // モデル選択保存イベント
+    if (modelSelect) {
+        modelSelect.addEventListener('change', () => {
+            localStorage.setItem('selectedModel', modelSelect.value);
+        });
+    }
+    
+    // 初回または会話が空の場合はウェルカム画面を表示
+    if (!messages || messages.length === 0) {
+        showWelcomeScreen();
+    }
+    
+    // チャット履歴を常に表示（あれば）
+    renderChatHistory();
+    
+    console.log('✅ アプリケーション初期化完了');
+}
+
+// UI要素の初期化を確認
+function initializeUIElements() {
+    const elements = [
+        'knowledgeToggle',
+        'voiceToggle', 
+        'speakToggle',
+        'knowledgeStatus',
+        'messageInput',
+        'sendButton'
+    ];
+    
+    let missingElements = [];
+    elements.forEach(id => {
+        const element = document.getElementById(id);
+        if (!element) {
+            missingElements.push(id);
+        }
+    });
+    
+    if (missingElements.length > 0) {
+        console.error('❌ UI要素が見つかりません:', missingElements);
+    } else {
+        console.log('✅ すべてのUI要素が正常に読み込まれました');
+    }
+}
+
+// イベントリスナーの設定
+function setupEventListeners() {
+    console.log('📎 イベントリスナーを設定中...');
+    
+    // 送信ボタン
+    const sendBtn = document.getElementById('sendButton');
+    if (sendBtn) {
+        sendBtn.addEventListener('click', () => {
+            console.log('送信ボタンがクリックされました');
+            if (window.sendMessage) {
+                window.sendMessage();
+            } else {
+                sendMessage();
+            }
+        });
+        console.log('✅ 送信ボタンのイベントリスナーを設定');
+    } else {
+        console.error('❌ 送信ボタンが見つかりません');
+    }
+    
+    // 新しいチャットボタン
+    const newChatBtn = document.getElementById('newChatButton');
+    if (newChatBtn) {
+        newChatBtn.addEventListener('click', () => {
+            console.log('新しいチャットボタンがクリックされました');
+            startNewChat();
+        });
+        console.log('✅ 新しいチャットボタンのイベントリスナーを設定');
+    } else {
+        console.error('❌ 新しいチャットボタンが見つかりません');
+    }
+    
+    // ナレッジトグル
+    const knowledgeToggle = document.getElementById('knowledgeToggle');
+    if (knowledgeToggle) {
+        knowledgeToggle.addEventListener('change', window.toggleKnowledge);
+        console.log('✅ ナレッジトグルのイベントリスナーを設定');
+    }
+    
+    // 音声入力トグル
+    const voiceToggle = document.getElementById('voiceToggle');
+    if (voiceToggle) {
+        voiceToggle.addEventListener('change', window.toggleVoice);
+        console.log('✅ 音声入力トグルのイベントリスナーを設定');
+    }
+    
+    // 読み上げトグル
+    const speakToggle = document.getElementById('speakToggle');
+    if (speakToggle) {
+        speakToggle.addEventListener('change', window.toggleSpeak);
+        console.log('✅ 読み上げトグルのイベントリスナーを設定');
+    }
+    
+    // メッセージ入力イベント
+    const msgInput = document.getElementById('messageInput');
+    if (msgInput) {
+        msgInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (window.sendMessage) {
+                    window.sendMessage();
+                } else {
+                    sendMessage();
+                }
+            }
+        });
+        
+        msgInput.addEventListener('input', () => {
+            msgInput.style.height = 'auto';
+            msgInput.style.height = msgInput.scrollHeight + 'px';
+        });
+        console.log('✅ メッセージ入力のイベントリスナーを設定');
+    }
+    
+    console.log('✅ すべてのイベントリスナーの設定完了');
+}
+
+// ウェルカム画面表示
+function showWelcomeScreen() {
+    messagesDiv.innerHTML = `
+        <div class="welcome-message">
+            <h2>AIアシスタントへようこそ</h2>
+            <p>何でもお聞きください。</p>
+            ${userProfile.name ? `<p>こんにちは、${userProfile.name}さん！</p>` : ''}
+            <div class="quick-actions">
+                <button onclick="showProfile()">👤 プロファイル設定</button>
+            </div>
+            <div class="info" style="margin-top: 20px;">
+                <p>📝 <strong>Markdown対応</strong> - 表やコードブロックがきれいに表示されます</p>
+                <p>💾 <strong>自動保存</strong> - 会話は自動的に保存されます</p>
+                <p>📚 <strong>社内ナレッジ</strong> - 登録したドキュメントを自動参照します</p>
+            </div>
+        </div>
+    `;
+}
+
+// 新しいチャットを開始
+function startNewChat() {
+    console.log('🆕 新しいチャットを開始');
+    
+    // 現在の会話を履歴に保存
+    if (messages.length > 0) {
+        chatHistory[currentChatId] = [...messages];
+        saveToLocalStorage();
+    }
+    
+    // 新しいチャットIDを生成
+    currentChatId = generateChatId();
+    messages = [];
+    
+    // UIをクリア
+    messagesDiv.innerHTML = '';
+    messageInput.value = '';
+    messageInput.style.height = 'auto';
+    
+    // ファイル添付もクリア
+    if (window.clearAttachedFiles) {
+        window.clearAttachedFiles();
+    }
+    
+    // ウェルカム画面を表示
+    showWelcomeScreen();
+    
+    // ローカルストレージを更新
+    saveToLocalStorage();
+    
+    console.log('✅ 新しいチャット準備完了');
+}
+
+// チャットID生成（上部で定義済み）
+
+// ローカルストレージから読み込み
+function loadFromLocalStorage() {
+    try {
+        const savedHistory = localStorage.getItem('chatHistory');
+        if (savedHistory) {
+            chatHistory = JSON.parse(savedHistory);
+            renderChatHistory();
+        }
+        
+        const savedCurrent = localStorage.getItem('currentChat');
+        if (savedCurrent) {
+            const data = JSON.parse(savedCurrent);
+            currentChatId = data.id;
+            messages = data.messages || [];
+            
+            // 会話を復元
+            if (messages.length > 0) {
+                messagesDiv.innerHTML = '';
+                messages.forEach(msg => {
+                    addMessage(msg.role, msg.content, false);
+                });
+            }
+        }
+        
+        console.log('✅ 会話履歴を復元しました');
+    } catch (error) {
+        console.error('履歴の読み込みエラー:', error);
+    }
+}
+
+// ローカルストレージに保存（サイズ制限付き）
+function saveToLocalStorage() {
+    try {
+        // メッセージ数制限（最新30件のみ）
+        if (messages.length > 30) {
+            messages = messages.slice(-30);
+        }
+        
+        // 履歴数制限（最新10件のみ）
+        const historyKeys = Object.keys(chatHistory);
+        if (historyKeys.length > 10) {
+            const sortedKeys = historyKeys.sort((a, b) => {
+                return new Date(chatHistory[b].timestamp) - new Date(chatHistory[a].timestamp);
+            });
+            const keepKeys = sortedKeys.slice(0, 10);
+            const newHistory = {};
+            keepKeys.forEach(key => {
+                newHistory[key] = chatHistory[key];
+            });
+            chatHistory = newHistory;
+        }
+        
+        // データサイズチェック
+        const testData = {
+            currentChat: {
+                id: currentChatId,
+                messages: messages,
+                timestamp: new Date().toISOString()
+            },
+            chatHistory: chatHistory
+        };
+        
+        const dataSize = JSON.stringify(testData).length;
+        if (dataSize > 500 * 1024) { // 500KB制限
+            console.warn('データサイズが大きすぎます。古いデータを削除します。');
+            // 履歴を半分に減らす
+            const historyKeys = Object.keys(chatHistory);
+            const keepKeys = historyKeys.slice(0, Math.floor(historyKeys.length / 2));
+            const newHistory = {};
+            keepKeys.forEach(key => {
+                newHistory[key] = chatHistory[key];
+            });
+            chatHistory = newHistory;
+        }
+        
+        // 現在の会話を保存
+        localStorage.setItem('currentChat', JSON.stringify({
+            id: currentChatId,
+            messages: messages,
+            timestamp: new Date().toISOString()
+        }));
+        
+        // 履歴を保存
+        localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+        
+        console.log('💾 自動保存完了');
+    } catch (error) {
+        console.error('保存エラー:', error);
+        // エラー時はLocalStorageをクリア
+        if (error.name === 'QuotaExceededError') {
+            console.error('LocalStorage容量超過。データをクリアします。');
+            localStorage.removeItem('chatHistory');
+            chatHistory = {};
+        }
+    }
+}
+
+// ユーザープロファイル読み込み
+function loadUserProfile() {
+    const saved = localStorage.getItem('userProfile');
+    if (saved) {
+        userProfile = JSON.parse(saved);
+    } else {
+        // 初回はプロファイル設定を促す
+        userProfile = {
+            name: '',
+            department: '',
+            preferences: [],
+            context: ''
+        };
+    }
+}
+
+// 社内ナレッジ読み込み（ナレッジボタンがONの時のみ）
+async function loadCompanyKnowledge() {
+    // ナレッジボタンがONの時のみ読み込む
+    if (!isKnowledgeEnabled) {
+        console.log('ナレッジ機能は無効です');
+        companyKnowledge = [];
+        return;
+    }
+    
+    try {
+        // 社内ドキュメントフォルダから読み込み
+        const response = await fetch('http://localhost:3001/api/knowledge');
+        if (response.ok) {
+            companyKnowledge = await response.json();
+            console.log(`📚 社内ナレッジ ${companyKnowledge.length}件読み込み`);
+        }
+    } catch (error) {
+        console.log('社内ナレッジは後で設定できます');
+    }
+}
+
+// Markdownレンダラーを一度だけ初期化
+let markdownRenderer = null;
+
+// Markdownレンダラーの初期化
+function initializeMarkdownRenderer() {
+    if (markdownRenderer) return;
+    
+    markdownRenderer = new marked.Renderer();
+    
+    markdownRenderer.code = function(code, language) {
+        const codeId = 'code-' + Math.random().toString(36).substr(2, 9);
+        const lang = language || 'plaintext';
+        
+        return `
+            <div class="code-block-wrapper">
+                <div class="code-block-header">
+                    <span class="code-language">${lang}</span>
+                    <button class="copy-code-btn" onclick="copyCode('${codeId}')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        コピー
+                    </button>
+                </div>
+                <pre><code id="${codeId}" class="language-${lang}">${escapeHtml(code)}</code></pre>
+            </div>
+        `;
+    };
+    
+    marked.setOptions({
+        renderer: markdownRenderer,
+        highlight: false // シンタックスハイライトは一旦無効化（パフォーマンスのため）
+    });
+}
+
+// Markdownレンダリング（最適化版）
+function renderMarkdown(text) {
+    if (!markdownRenderer) {
+        initializeMarkdownRenderer();
+    }
+    
+    const html = marked.parse(text);
+    return DOMPurify.sanitize(html, {
+        ALLOWED_TAGS: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'br', 'strong', 'em', 
+                      'ul', 'ol', 'li', 'blockquote', 'code', 'pre', 'a', 'table', 
+                      'thead', 'tbody', 'tr', 'th', 'td', 'img', 'div', 'span', 'button', 'svg', 'rect', 'path'],
+        ALLOWED_ATTR: ['href', 'target', 'rel', 'src', 'alt', 'title', 'class', 'id', 'onclick', 
+                       'width', 'height', 'viewBox', 'fill', 'stroke', 'stroke-width', 'x', 'y', 
+                       'rx', 'ry', 'd', 'stroke-linecap', 'stroke-linejoin']
+    });
+}
+
+// HTMLエスケープ関数
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+// コードをクリップボードにコピー
+window.copyCode = function(codeId) {
+    const codeElement = document.getElementById(codeId);
+    if (codeElement) {
+        const text = codeElement.textContent;
+        navigator.clipboard.writeText(text).then(() => {
+            // コピー成功のフィードバック
+            const btn = event.target.closest('.copy-code-btn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '✓ コピー完了';
+            btn.style.color = '#10b981';
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.style.color = '';
+            }, 2000);
+        }).catch(err => {
+            console.error('コピーに失敗しました:', err);
+        });
+    }
+}
+
+// メッセージ入力イベント - setupEventListeners内に移動済み
+
+// メッセージ送信
+async function sendMessage() {
+    const message = messageInput.value.trim();
+    if (!message || isGenerating) return;
+    
+    // モデル選択（デフォルト値を設定）
+    let selectedModel = modelSelect ? modelSelect.value : 'gemini-1.5-flash';
+    if (!selectedModel) {
+        // フォールバックとして固定値を使用
+        selectedModel = 'gemini-1.5-flash';
+    }
+    
+    messageInput.value = '';
+    messageInput.style.height = 'auto';
+    
+    addMessage('user', message);
+    
+    isGenerating = true;
+    sendButton.disabled = true;
+    
+    const typingDiv = addTypingIndicator();
+    
+    try {
+        // コンテキスト構築（ナレッジが有効な場合のみ）
+        // contextは削除し、useKnowledgeフラグのみ送信
+        
+        const response = await fetch('http://localhost:3001/api/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                message: message,
+                model: selectedModel,
+                history: messages.slice(-10),
+                useKnowledge: Boolean(isKnowledgeEnabled),  // 確実にブール値を送信
+                userProfile: userProfile
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let assistantMessage = '';
+        
+        removeTypingIndicator(typingDiv);
+        const assistantDiv = addMessage('assistant', '');
+        const contentDiv = assistantDiv.querySelector('.message-content');
+        
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split('\n');
+            
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    const jsonStr = line.slice(6);
+                    if (jsonStr === '[DONE]') {
+                        break;
+                    }
+                    try {
+                        const data = JSON.parse(jsonStr);
+                        if (data.content) {
+                            assistantMessage += data.content;
+                            contentDiv.innerHTML = renderMarkdown(assistantMessage);
+                            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                        }
+                    } catch (e) {
+                        // JSONパースエラーは無視（部分的なデータの可能性）
+                        console.debug('Partial data:', jsonStr);
+                    }
+                }
+            }
+        }
+        
+        messages.push({ role: 'assistant', content: assistantMessage });
+        updateChatHistory();
+        saveToLocalStorage(); // 自動保存
+        
+        // 読み上げ機能が有効なら読み上げる
+        if (isSpeakEnabled && assistantMessage) {
+            speakText(assistantMessage);
+        }
+        
+    } catch (error) {
+        console.error('Error:', error);
+        removeTypingIndicator(typingDiv);
+        addMessage('assistant', 'エラーが発生しました。接続を確認してください。');
+        setStatus('error');
+    } finally {
+        isGenerating = false;
+        sendButton.disabled = false;
+    }
+}
+
+// コンテキスト構築（削除済み - バックエンドで処理）
+// function buildContext(message) { ... }
+// この関数は削除されました。ナレッジ検索はバックエンドで行います。
+
+// メッセージ追加
+function addMessage(role, content, save = true) {
+    if (messagesDiv.querySelector('.welcome-message')) {
+        messagesDiv.innerHTML = '';
+    }
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${role}`;
+    
+    const avatar = document.createElement('div');
+    avatar.className = 'message-avatar';
+    avatar.textContent = role === 'user' ? (userProfile.name || 'You') : 'AI';
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content';
+    
+    if (role === 'assistant' && content) {
+        contentDiv.innerHTML = renderMarkdown(content);
+    } else {
+        contentDiv.textContent = content;
+    }
+    
+    // タイムスタンプ追加
+    const timestamp = document.createElement('div');
+    timestamp.className = 'message-timestamp';
+    timestamp.textContent = new Date().toLocaleTimeString();
+    
+    messageDiv.appendChild(avatar);
+    messageDiv.appendChild(contentDiv);
+    messageDiv.appendChild(timestamp);
+    messagesDiv.appendChild(messageDiv);
+    
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    
+    if (role === 'user' && save) {
+        messages.push({ role, content });
+    }
+    
+    return messageDiv;
+}
+
+// タイピングインジケーター
+function addTypingIndicator() {
+    const typingDiv = document.createElement('div');
+    typingDiv.className = 'message assistant typing';
+    typingDiv.innerHTML = `
+        <div class="message-avatar">AI</div>
+        <div class="message-content">
+            <div class="typing-indicator">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    `;
+    messagesDiv.appendChild(typingDiv);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    return typingDiv;
+}
+
+function removeTypingIndicator(typingDiv) {
+    if (typingDiv && typingDiv.parentNode) {
+        typingDiv.remove();
+    }
+}
+
+// 新規チャット（グローバルスコープで利用可能にする）
+window.newChat = function() {
+    // 現在のチャットを履歴に保存
+    if (messages.length > 0) {
+        updateChatHistory();
+        saveToLocalStorage();
+    }
+    
+    currentChatId = generateChatId();
+    messages = [];
+    showWelcomeScreen();
+}
+
+// チャット履歴更新
+function updateChatHistory() {
+    if (messages.length === 0) return;
+    
+    chatHistory[currentChatId] = {
+        title: messages[0]?.content?.substring(0, 30) + '...' || '新しいチャット',
+        messages: messages,
+        timestamp: new Date().toISOString()
+    };
+    renderChatHistory();
+}
+
+// チャット履歴レンダリング
+function renderChatHistory() {
+    const historyDiv = document.getElementById('chatHistory');
+    if (!historyDiv) return;
+    
+    historyDiv.innerHTML = '';
+    
+    const sortedChats = Object.entries(chatHistory)
+        .sort((a, b) => new Date(b[1].timestamp) - new Date(a[1].timestamp))
+        .slice(0, 20); // 最新20件
+    
+    sortedChats.forEach(([id, chat]) => {
+        const chatItem = document.createElement('div');
+        chatItem.className = 'chat-item';
+        chatItem.innerHTML = `
+            <div class="chat-item-title" contenteditable="false" data-chat-id="${id}">${chat.title}</div>
+            <div class="chat-item-date">${new Date(chat.timestamp).toLocaleDateString()}</div>
+        `;
+        
+        // タイトルをダブルクリックで編集可能に
+        const titleDiv = chatItem.querySelector('.chat-item-title');
+        titleDiv.ondblclick = (e) => {
+            e.stopPropagation();
+            titleDiv.contentEditable = 'true';
+            titleDiv.focus();
+            
+            // 全文選択
+            const range = document.createRange();
+            range.selectNodeContents(titleDiv);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+        };
+        
+        titleDiv.onblur = () => {
+            titleDiv.contentEditable = 'false';
+            const newTitle = titleDiv.textContent.trim();
+            if (newTitle && newTitle !== chat.title) {
+                chat.title = newTitle;
+                saveToLocalStorage();
+            }
+        };
+        
+        titleDiv.onkeydown = (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                titleDiv.blur();
+            }
+        };
+        
+        chatItem.onclick = () => {
+            if (titleDiv.contentEditable !== 'true') {
+                loadChat(id);
+            }
+        };
+        
+        // 削除ボタン
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'chat-delete-btn';
+        deleteBtn.textContent = '×';
+        deleteBtn.onclick = (e) => {
+            e.stopPropagation();
+            deleteChat(id);
+        };
+        chatItem.appendChild(deleteBtn);
+        
+        historyDiv.appendChild(chatItem);
+    });
+}
+
+// チャット読み込み
+function loadChat(chatId) {
+    // 現在のチャットと同じなら何もしない
+    if (chatId === currentChatId) return;
+    
+    if (messages.length > 0) {
+        updateChatHistory();
+    }
+    
+    const chat = chatHistory[chatId];
+    if (!chat) return;
+    
+    currentChatId = chatId;
+    // メッセージを深くコピーして複製を防ぐ
+    messages = JSON.parse(JSON.stringify(chat.messages || []));
+    
+    messagesDiv.innerHTML = '';
+    messages.forEach(msg => {
+        addMessage(msg.role, msg.content, false);
+    });
+    
+    saveToLocalStorage();
+}
+
+// チャット削除
+function deleteChat(chatId) {
+    if (confirm('このチャットを削除しますか？')) {
+        delete chatHistory[chatId];
+        
+        // 現在のチャットを削除した場合、新しいチャットを開始
+        if (chatId === currentChatId) {
+            currentChatId = generateChatId();
+            messages = [];
+            showWelcomeScreen();
+        }
+        
+        renderChatHistory();
+        saveToLocalStorage();
+    }
+}
+
+// エクスポート機能は管理者画面でのみ利用可能
+// ユーザー向けのエクスポート機能は削除済み
+// function exportAllChats() - 削除済み
+
+// プロファイル表示（グローバルスコープで利用可能にする）
+window.showProfile = function() {
+    const name = prompt('お名前:', userProfile.name || '');
+    const department = prompt('部署:', userProfile.department || '');
+    const context = prompt('AIに覚えておいてほしいこと:', userProfile.context || '');
+    
+    if (name !== null) {
+        userProfile.name = name;
+        userProfile.department = department;
+        userProfile.context = context;
+        localStorage.setItem('userProfile', JSON.stringify(userProfile));
+        alert('プロファイルを更新しました');
+    }
+}
+
+// 社内ナレッジ管理（グローバルスコープで利用可能にする）
+window.showKnowledge = async function() {
+    window.location.href = 'knowledge-manager.html';
+}
+
+// モデル読み込み
+async function loadModels() {
+    try {
+        const response = await fetch('http://localhost:3001/api/models');
+        const data = await response.json();
+        
+        if (data.models && data.models.length > 0) {
+            availableModels = data.models;
+            modelSelect.innerHTML = '';
+            
+            const providers = {};
+            data.models.forEach(model => {
+                if (!providers[model.provider]) {
+                    providers[model.provider] = [];
+                }
+                providers[model.provider].push(model);
+            });
+            
+            Object.entries(providers).forEach(([provider, models]) => {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = provider.toUpperCase();
+                
+                models.forEach(model => {
+                    const option = document.createElement('option');
+                    option.value = model.name;
+                    option.textContent = model.description || model.name;
+                    optgroup.appendChild(option);
+                });
+                
+                modelSelect.appendChild(optgroup);
+            });
+            
+            // 前回選択したモデルを復元
+            const savedModel = localStorage.getItem('selectedModel');
+            if (savedModel && data.models.find(m => m.name === savedModel)) {
+                modelSelect.value = savedModel;
+            } else if (data.models.find(m => m.name === 'gemini-1.5-flash')) {
+                modelSelect.value = 'gemini-1.5-flash';
+            } else if (data.models.length > 0) {
+                // 最初のモデルを選択
+                modelSelect.value = data.models[0].name;
+            }
+        }
+    } catch (error) {
+        console.error('Error loading models:', error);
+        modelSelect.innerHTML = '<option value="">モデルを読み込めません</option>';
+    }
+}
+
+// モデル選択保存は initializeApp 内で設定
+
+// トグル機能の実装（グローバルスコープで利用可能にする）
+window.toggleKnowledge = function() {
+    isKnowledgeEnabled = !isKnowledgeEnabled;
+    const btn = document.getElementById('knowledgeToggle');
+    const status = document.getElementById('knowledgeStatus');
+    
+    console.log('ナレッジトグル:', isKnowledgeEnabled);
+    
+    if (isKnowledgeEnabled) {
+        btn.classList.add('active');
+        status.style.display = 'flex';
+        status.querySelector('.status-text').textContent = 'ナレッジベース接続中';
+        
+        // ナレッジデータの再読み込み
+        loadCompanyKnowledge();
+    } else {
+        btn.classList.remove('active');
+        status.style.display = 'none';
+        // ナレッジをクリア
+        companyKnowledge = [];
+    }
+    
+    localStorage.setItem('knowledgeEnabled', String(isKnowledgeEnabled));
+}
+
+window.toggleVoice = function() {
+    isVoiceEnabled = !isVoiceEnabled;
+    const btn = document.getElementById('voiceToggle');
+    const voiceBtn = document.getElementById('voiceButton');
+    
+    if (isVoiceEnabled) {
+        btn.classList.add('active');
+        voiceBtn.style.display = 'flex';
+        initializeSpeechRecognition();
+    } else {
+        btn.classList.remove('active');
+        voiceBtn.style.display = 'none';
+        if (recognition) {
+            recognition.stop();
+        }
+    }
+    
+    localStorage.setItem('voiceEnabled', isVoiceEnabled);
+}
+
+window.toggleSpeak = function() {
+    isSpeakEnabled = !isSpeakEnabled;
+    const btn = document.getElementById('speakToggle');
+    
+    if (isSpeakEnabled) {
+        btn.classList.add('active');
+    } else {
+        btn.classList.remove('active');
+        // 現在の読み上げを停止
+        if (synthesis.speaking) {
+            synthesis.cancel();
+        }
+    }
+    
+    localStorage.setItem('speakEnabled', isSpeakEnabled);
+}
+
+// 音声認識の初期化
+function initializeSpeechRecognition() {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        alert('お使いのブラウザは音声認識に対応していません。Chrome/Edgeをお使いください。');
+        return;
+    }
+    
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    
+    recognition.lang = 'ja-JP';
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    
+    recognition.onstart = () => {
+        isRecording = true;
+        const voiceBtn = document.getElementById('voiceButton');
+        voiceBtn.classList.add('recording');
+        voiceBtn.querySelector('.recording-indicator').style.display = 'block';
+    };
+    
+    recognition.onresult = (event) => {
+        let finalTranscript = '';
+        let interimTranscript = '';
+        
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+                finalTranscript += transcript;
+            } else {
+                interimTranscript += transcript;
+            }
+        }
+        
+        messageInput.value = finalTranscript || interimTranscript;
+        messageInput.style.height = 'auto';
+        messageInput.style.height = messageInput.scrollHeight + 'px';
+    };
+    
+    recognition.onend = () => {
+        isRecording = false;
+        const voiceBtn = document.getElementById('voiceButton');
+        voiceBtn.classList.remove('recording');
+        voiceBtn.querySelector('.recording-indicator').style.display = 'none';
+    };
+    
+    recognition.onerror = (event) => {
+        console.error('音声認識エラー:', event.error);
+        if (event.error === 'no-speech') {
+            alert('音声が検出されませんでした。もう一度お試しください。');
+        }
+    };
+}
+
+// 音声入力開始（グローバルスコープで利用可能にする）
+window.startVoiceInput = function() {
+    if (!recognition) {
+        initializeSpeechRecognition();
+    }
+    
+    if (isRecording) {
+        recognition.stop();
+    } else {
+        recognition.start();
+    }
+}
+
+// テキスト読み上げ
+function speakText(text) {
+    if (!isSpeakEnabled || !text) return;
+    
+    // Markdownを除去してプレーンテキストに
+    const plainText = text
+        .replace(/```[\s\S]*?```/g, 'コードブロック')
+        .replace(/[#*`_~]/g, '')
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .replace(/!\[([^\]]*)\]\([^)]+\)/g, '画像');
+    
+    const utterance = new SpeechSynthesisUtterance(plainText);
+    utterance.lang = 'ja-JP';
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+    utterance.volume = 0.8;
+    
+    synthesis.speak(utterance);
+}
+
+// 初期設定の復元 - initializeApp内に統合
+function restoreSettings() {
+    // 保存された設定を復元（ナレッジはデフォルトOFF）
+    const knowledgeEnabled = localStorage.getItem('knowledgeEnabled') === 'true';
+    const voiceEnabled = localStorage.getItem('voiceEnabled') === 'true';
+    const speakEnabled = localStorage.getItem('speakEnabled') === 'true';
+    
+    console.log('初期設定復元:');
+    console.log('  ナレッジ:', knowledgeEnabled);
+    console.log('  音声:', voiceEnabled);
+    console.log('  読み上げ:', speakEnabled);
+    
+    // 直接状態を設定（イベントループを避けるため）
+    // ナレッジ設定
+    isKnowledgeEnabled = knowledgeEnabled;
+    const knowledgeBtn = document.getElementById('knowledgeToggle');
+    const knowledgeStatus = document.getElementById('knowledgeStatus');
+    if (knowledgeBtn) {
+        if (knowledgeEnabled) {
+            knowledgeBtn.classList.add('active');
+        } else {
+            knowledgeBtn.classList.remove('active');
+        }
+    }
+    if (knowledgeStatus) {
+        knowledgeStatus.style.display = knowledgeEnabled ? 'inline' : 'none';
+    }
+    
+    // 音声設定
+    isVoiceEnabled = voiceEnabled;
+    const voiceBtn = document.getElementById('voiceToggle');
+    if (voiceBtn) {
+        if (voiceEnabled) {
+            voiceBtn.classList.add('active');
+            // 音声認識の初期化は必要に応じて後で
+        } else {
+            voiceBtn.classList.remove('active');
+        }
+    }
+    
+    // 読み上げ設定
+    isSpeakEnabled = speakEnabled;
+    const speakBtn = document.getElementById('speakToggle');
+    if (speakBtn) {
+        if (speakEnabled) {
+            speakBtn.classList.add('active');
+        } else {
+            speakBtn.classList.remove('active');
+        }
+    }
+    
+    // ローカルストレージに保存
+    localStorage.setItem('knowledgeEnabled', knowledgeEnabled);
+    localStorage.setItem('voiceEnabled', voiceEnabled);
+    localStorage.setItem('speakEnabled', speakEnabled);
+}
+
+// ステータス設定
+function setStatus(status) {
+    if (status === 'error') {
+        statusElement.textContent = '● 接続エラー';
+        statusElement.className = 'status error';
+    } else {
+        statusElement.textContent = '● 接続中';
+        statusElement.className = 'status';
+    }
+}
+
+// 接続チェック
+async function checkConnection() {
+    try {
+        const response = await fetch('http://localhost:3001/api/health');
+        const data = await response.json();
+        if (response.ok) {
+            setStatus('connected');
+        } else {
+            setStatus('error');
+        }
+    } catch {
+        setStatus('error');
+    }
+}
+
+// ファイル添付機能
+let attachedFiles = [];
+
+// ファイル添付の初期化
+function initializeFileAttachment() {
+    const fileInput = document.getElementById('fileInput');
+    const filePreview = document.getElementById('filePreview');
+    
+    if (fileInput) {
+        fileInput.addEventListener('change', handleFileSelect);
+    }
+}
+
+// ファイル選択処理
+async function handleFileSelect(event) {
+    const files = Array.from(event.target.files);
+    const filePreview = document.getElementById('filePreview');
+    
+    for (const file of files) {
+        // ファイルサイズチェック（10MB以下）
+        if (file.size > 10 * 1024 * 1024) {
+            alert(`${file.name} は10MBを超えています。`);
+            continue;
+        }
+        
+        // ファイルを読み込む
+        const fileData = await readFile(file);
+        attachedFiles.push({
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            data: fileData
+        });
+        
+        // プレビューに追加
+        addFilePreview(file.name, attachedFiles.length - 1);
+    }
+    
+    // プレビューエリアを表示
+    if (attachedFiles.length > 0) {
+        filePreview.style.display = 'flex';
+    }
+    
+    // ファイル入力をリセット
+    event.target.value = '';
+}
+
+// ファイル読み込み
+function readFile(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        
+        reader.onload = (e) => {
+            if (file.type.startsWith('image/')) {
+                resolve(e.target.result); // Base64エンコード
+            } else {
+                resolve(e.target.result); // テキストファイル
+            }
+        };
+        
+        reader.onerror = reject;
+        
+        if (file.type.startsWith('image/')) {
+            reader.readAsDataURL(file);
+        } else {
+            reader.readAsText(file);
+        }
+    });
+}
+
+// ファイルプレビュー追加
+function addFilePreview(fileName, index) {
+    const filePreview = document.getElementById('filePreview');
+    const previewItem = document.createElement('div');
+    previewItem.className = 'file-preview-item';
+    previewItem.innerHTML = `
+        <span>${fileName}</span>
+        <span class="remove-file" onclick="removeFile(${index})">×</span>
+    `;
+    filePreview.appendChild(previewItem);
+}
+
+// ファイル削除
+window.removeFile = function(index) {
+    attachedFiles.splice(index, 1);
+    
+    // プレビューを再描画
+    const filePreview = document.getElementById('filePreview');
+    filePreview.innerHTML = '';
+    
+    attachedFiles.forEach((file, i) => {
+        addFilePreview(file.name, i);
+    });
+    
+    // ファイルがなくなったらプレビューエリアを非表示
+    if (attachedFiles.length === 0) {
+        filePreview.style.display = 'none';
+    }
+}
+
+// ファイル添付を含むメッセージ送信のラッパー
+async function sendMessageWrapper() {
+    const message = messageInput.value.trim();
+    if (!message && attachedFiles.length === 0) return;
+    
+    // ファイルがある場合は、メッセージに添付情報を追加
+    let enhancedMessage = message;
+    if (attachedFiles.length > 0) {
+        enhancedMessage += '\n\n【添付ファイル】\n';
+        for (const file of attachedFiles) {
+            if (file.type.startsWith('text/') || file.name.endsWith('.txt') || file.name.endsWith('.md') || 
+                file.name.endsWith('.js') || file.name.endsWith('.py') || file.name.endsWith('.json')) {
+                enhancedMessage += `\nファイル: ${file.name}\n\`\`\`\n${file.data}\n\`\`\`\n`;
+            } else if (file.type.startsWith('image/')) {
+                enhancedMessage += `\n画像: ${file.name}\n`;
+            } else {
+                enhancedMessage += `\nファイル: ${file.name} (${Math.round(file.size / 1024)}KB)\n`;
+            }
+        }
+        
+        // ファイルをクリア
+        attachedFiles = [];
+        const filePreview = document.getElementById('filePreview');
+        filePreview.innerHTML = '';
+        filePreview.style.display = 'none';
+        
+        // メッセージを一時的に変更
+        messageInput.value = enhancedMessage;
+    }
+    
+    // 元のsendMessage関数を呼び出す
+    await sendMessage();
+}
+
+// ファイル添付をクリア
+window.clearAttachedFiles = function() {
+    attachedFiles = [];
+    const filePreview = document.getElementById('filePreview');
+    if (filePreview) {
+        filePreview.innerHTML = '';
+        filePreview.style.display = 'none';
+    }
+}
+
+// デバッグ用：LocalStorageを完全にクリア
+window.clearAllData = function() {
+    console.log('Clearing all data from LocalStorage...');
+    localStorage.clear();
+    messages = [];
+    chatHistory = {};
+    currentChatId = generateChatId();
+    if (messagesDiv) {
+        messagesDiv.innerHTML = '';
+        showWelcomeScreen();
+    }
+    console.log('All data cleared');
+}
+
+// グローバル関数として公開（HTML内のonclickで利用可能にする）
+window.sendMessage = sendMessageWrapper;
+window.newChat = startNewChat;
+// toggleKnowledge, toggleVoice, toggleSpeak, startVoiceInputは既に定義済み
+
+// アプリ初期化
+document.addEventListener('DOMContentLoaded', () => {
+    initializeApp();
+    initializeFileAttachment();
+    initializeMarkdownRenderer();
+});

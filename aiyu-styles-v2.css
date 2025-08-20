@@ -1,0 +1,490 @@
+/* Aiyu Custom Styles V2 - Deep Blue Theme */
+
+/* Company Logo */
+.company-logo {
+    height: 32px !important;
+    object-fit: contain;
+    display: inline-block;
+    flex-shrink: 0;
+    vertical-align: middle;
+}
+
+/* Header Aiyu Logo */
+.aiyu-logo {
+    width: 24px !important;
+    height: 24px !important;
+    object-fit: contain;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 2px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    animation: float 3s ease-in-out infinite;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+/* Chat Avatar Adjustments */
+.message-avatar {
+    width: 28px !important;
+    height: 28px !important;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 600;
+    flex-shrink: 0;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(30, 58, 138, 0.08);
+}
+
+.message-avatar img {
+    width: 24px !important;
+    height: 24px !important;
+    object-fit: contain !important;
+    padding: 0 !important;
+}
+
+.message.assistant .message-avatar {
+    background: white;
+    border: 1.5px solid #3b5998;
+    padding: 2px;
+}
+
+.message.user .message-avatar {
+    background: linear-gradient(135deg, #1e3a8a 0%, #2d4a9e 100%) !important;
+    color: white !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.9) !important;
+    font-size: 10px !important;
+}
+
+/* Header Adjustments */
+.chat-header {
+    padding: 10px 20px !important;
+    background: linear-gradient(135deg, #1e3a8a 0%, #3b5998 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 6px rgba(30, 58, 138, 0.12);
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.chat-header h1 {
+    font-size: 16px !important;
+    font-weight: 600;
+    color: white !important;
+    background: none !important;
+    -webkit-background-clip: unset !important;
+    -webkit-text-fill-color: white !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+    margin: 0;
+    letter-spacing: 0.2px;
+    line-height: 1.2;
+}
+
+/* Animations */
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-3px); }
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+}
+
+/* Message area improvements */
+.messages {
+    padding: 20px !important;
+    background: linear-gradient(180deg, #f0f4ff 0%, #e0e8ff 100%) !important;
+}
+
+.message {
+    margin-bottom: 16px !important;
+}
+
+.message-content {
+    max-width: 75% !important;
+    padding: 10px 14px !important;
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    overflow-x: hidden !important;
+}
+
+/* 箇条書きのスタイル修正 */
+.message-content ul,
+.message-content ol {
+    padding-left: 20px !important;
+    margin: 8px 0 !important;
+    max-width: 100% !important;
+}
+
+.message-content li {
+    margin: 4px 0 !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    max-width: 100% !important;
+}
+
+/* コードブロックのスタイル修正 */
+.message-content pre {
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    white-space: pre-wrap !important;
+    word-wrap: break-word !important;
+}
+
+/* USER MESSAGE BLUE GRADIENT */
+.message.user .message-content {
+    background: linear-gradient(135deg, #2d4a9e 0%, #3b5998 100%) !important;
+    color: white !important;
+    border: none !important;
+    box-shadow: 0 2px 6px rgba(30, 58, 138, 0.15) !important;
+}
+
+.message.assistant .message-content {
+    background: white !important;
+    color: #1e2a5a !important;
+    border: 1px solid #d0deff !important;
+    box-shadow: 0 1px 3px rgba(30, 58, 138, 0.08) !important;
+}
+
+/* Copy button styling */
+.action-btn.copy-btn {
+    padding: 2px 6px !important;
+    background: transparent !important;
+    border: 1px solid #3b5998 !important;
+    border-radius: 6px !important;
+    font-size: 11px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    color: #1e3a8a !important;
+}
+
+.action-btn.copy-btn:hover {
+    background: #f0f4ff !important;
+    border-color: #1e3a8a !important;
+}
+
+.action-btn.copy-btn svg {
+    width: 12px !important;
+    height: 12px !important;
+    stroke: #1e3a8a !important;
+}
+
+/* Resend button */
+.action-btn.resend-btn {
+    padding: 2px 6px !important;
+    background: transparent !important;
+    border: 1px solid #3b5998 !important;
+    border-radius: 6px !important;
+    font-size: 11px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    color: #1e3a8a !important;
+}
+
+.action-btn.resend-btn:hover {
+    background: #f0f4ff !important;
+    border-color: #1e3a8a !important;
+}
+
+.action-btn.resend-btn svg {
+    width: 12px !important;
+    height: 12px !important;
+    stroke: #1e3a8a !important;
+}
+
+/* Action buttons container */
+.message-actions {
+    display: flex !important;
+    gap: 6px !important;
+    margin-top: 6px !important;
+    opacity: 0.7 !important;
+    transition: opacity 0.2s ease !important;
+}
+
+.message:hover .message-actions {
+    opacity: 1 !important;
+}
+
+/* Input area refinements */
+.input-area {
+    padding: 12px 20px !important;
+    background: linear-gradient(135deg, #1e3a8a 0%, #2d4a9e 100%) !important;
+    border-top: 2px solid #0f172a !important;
+}
+
+/* Feature toggles - WHITE BACKGROUND WITH BLUE TEXT */
+.toggle-btn {
+    padding: 6px 10px !important;
+    font-size: 12px !important;
+    border: 1.5px solid #3b5998 !important;
+    border-radius: 6px !important;
+    background: white !important;
+    color: #1e3a8a !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+
+.toggle-btn:hover {
+    background: #f0f4ff !important;
+    border-color: #1e3a8a !important;
+}
+
+.toggle-btn svg {
+    stroke: #1e3a8a !important;
+    width: 16px !important;
+    height: 16px !important;
+}
+
+.toggle-label {
+    color: #1e3a8a !important;
+    font-weight: 500 !important;
+}
+
+/* Active toggle button */
+.toggle-btn.active {
+    background: linear-gradient(135deg, #1e3a8a 0%, #3b5998 100%) !important;
+    border-color: #1e3a8a !important;
+    box-shadow: 0 2px 6px rgba(30, 58, 138, 0.2) !important;
+    color: white !important;
+}
+
+.toggle-btn.active svg {
+    stroke: white !important;
+}
+
+.toggle-btn.active .toggle-label {
+    color: white !important;
+}
+
+/* Input controls specific */
+.input-controls {
+    padding: 8px 20px !important;
+    background: white !important;
+    border-bottom: 1px solid #e0e8ff !important;
+}
+
+.feature-toggles {
+    display: flex !important;
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+}
+
+/* Knowledge status */
+.knowledge-status {
+    background: #f0f4ff !important;
+    padding: 6px 12px !important;
+    border-radius: 6px !important;
+    border: 1px solid #3b5998 !important;
+    color: #1e3a8a !important;
+    font-size: 12px !important;
+}
+
+/* Sidebar improvements */
+.sidebar {
+    background: linear-gradient(180deg, #1e3a8a 0%, #1e2a5a 100%) !important;
+}
+
+.sidebar-header {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.chat-history {
+    background: transparent !important;
+}
+
+.chat-item {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: white !important;
+}
+
+.chat-item:hover {
+    background: rgba(255, 255, 255, 0.15) !important;
+}
+
+.chat-item-title {
+    color: white !important;
+}
+
+.chat-item-date {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.sidebar-footer {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.model-selector label {
+    color: white !important;
+    font-weight: 500 !important;
+    font-size: 12px !important;
+}
+
+#modelSelect {
+    background: white !important;
+    color: #1e3a8a !important;
+    border: 1px solid #3b5998 !important;
+    padding: 6px 10px !important;
+    border-radius: 6px !important;
+    font-size: 13px !important;
+}
+
+#modelSelect option {
+    background: white !important;
+    color: #1e3a8a !important;
+}
+
+.new-chat-btn {
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%) !important;
+    padding: 10px 18px !important;
+    font-size: 13px !important;
+    border-radius: 10px !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.new-chat-btn:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(30, 58, 138, 0.25) !important;
+}
+
+#messageInput {
+    padding: 10px 14px !important;
+    font-size: 14px !important;
+    border: 2px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 20px !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+}
+
+#messageInput:focus {
+    border-color: rgba(255, 255, 255, 0.4) !important;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1) !important;
+}
+
+#sendButton {
+    width: 42px !important;
+    height: 42px !important;
+    background: linear-gradient(135deg, #0f172a 0%, #1e2a5a 100%) !important;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+#sendButton:hover {
+    transform: scale(1.08) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Status indicator */
+.status {
+    font-size: 12px !important;
+    padding: 4px 10px !important;
+    background: rgba(255, 255, 255, 0.15) !important;
+    backdrop-filter: blur(8px) !important;
+}
+
+/* Welcome message */
+.welcome-message {
+    background: rgba(255, 255, 255, 0.95) !important;
+    padding: 30px !important;
+    border-radius: 12px !important;
+    box-shadow: 0 2px 8px rgba(30, 58, 138, 0.1) !important;
+}
+
+.welcome-message h2 {
+    font-size: 24px !important;
+    margin-bottom: 12px !important;
+    color: #1e3a8a !important;
+    background: none !important;
+    -webkit-background-clip: unset !important;
+    -webkit-text-fill-color: #1e3a8a !important;
+}
+
+.welcome-message p {
+    font-size: 14px !important;
+    color: #3b5998 !important;
+}
+
+/* Typing indicator */
+.typing-indicator {
+    padding: 8px 12px !important;
+    background: linear-gradient(135deg, #dae8ff 0%, #c4d6ff 100%) !important;
+    border: 1px solid rgba(30, 58, 138, 0.15) !important;
+}
+
+.typing-indicator .typing-dot {
+    width: 5px !important;
+    height: 5px !important;
+    background: linear-gradient(135deg, #1e3a8a 0%, #3b5998 100%) !important;
+}
+
+/* File preview area */
+.file-preview {
+    background: linear-gradient(135deg, #f8faff 0%, #eff3ff 100%) !important;
+    border: 1.5px solid rgba(30, 58, 138, 0.1) !important;
+    padding: 8px 12px !important;
+    border-radius: 8px !important;
+    margin-bottom: 8px !important;
+}
+
+.file-preview-item {
+    background: white !important;
+    padding: 6px 10px !important;
+    border-radius: 6px !important;
+    font-size: 13px !important;
+    border: 1px solid rgba(30, 58, 138, 0.08) !important;
+}
+
+/* File attach button */
+.file-attach-btn {
+    width: 42px !important;
+    height: 42px !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+    border: 2px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 50% !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.file-attach-btn:hover {
+    background: white !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+    transform: scale(1.05);
+}
+
+.file-attach-btn svg {
+    width: 20px;
+    height: 20px;
+    stroke: #1e3a8a;
+}
+
+.file-attach-btn:hover svg {
+    stroke: #0f172a;
+}
+
+/* Export button */
+.export-btn {
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%) !important;
+}

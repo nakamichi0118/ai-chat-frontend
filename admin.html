@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>アイユーくんAI - 管理者画面</title>
+    <link rel="icon" type="image/png" href="/aiyu-icons/こんにちは.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e2a5a 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .admin-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .admin-header {
+            background: white;
+            border-radius: 12px;
+            padding: 20px 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .admin-header h1 {
+            color: #1e3a8a;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .admin-header img.aiyu-icon {
+            width: 36px;
+            height: 36px;
+        }
+
+        .admin-header img.company-logo {
+            height: 40px;
+            object-fit: contain;
+        }
+
+        .back-btn {
+            padding: 10px 20px;
+            background: #1e3a8a;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .back-btn:hover {
+            background: #2d4a9e;
+        }
+
+        .admin-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+        }
+
+        .admin-section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .admin-section h2 {
+            color: #1e3a8a;
+            font-size: 20px;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e0e8ff;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #3b5998;
+            font-weight: 500;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid #d0deff;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #3b5998;
+            box-shadow: 0 0 0 3px rgba(59, 89, 152, 0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b5998 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(30, 58, 138, 0.3);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #1e3a8a;
+            border: 2px solid #3b5998;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: #f0f4ff;
+        }
+
+        .status-message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        .status-message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status-message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .file-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #d0deff;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 15px;
+        }
+
+        .file-item {
+            padding: 8px 12px;
+            margin-bottom: 6px;
+            background: #f8f9ff;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .file-item:hover {
+            background: #e8ecff;
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .file-actions button {
+            padding: 4px 8px;
+            font-size: 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-download {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+        }
+
+        .tab-container {
+            margin-bottom: 20px;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-button {
+            padding: 10px 20px;
+            background: white;
+            color: #3b5998;
+            border: 2px solid #d0deff;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button.active {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b5998 100%);
+            color: white;
+            border-color: #1e3a8a;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .knowledge-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #f8f9ff;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #d0deff;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1e3a8a;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+
+        .connection-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: #f0f4ff;
+            border-radius: 20px;
+            font-size: 13px;
+            color: #3b5998;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #dc3545;
+        }
+
+        .status-dot.connected {
+            background: #28a745;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <div class="admin-header">
+            <h1>
+                <img src="/aiyu-icons/こんにちは.png" alt="アイユーくん" class="aiyu-icon">
+                アイユーくんAI 管理者画面
+            </h1>
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <img src="/iucglog.png" alt="会社ロゴ" class="company-logo">
+                <a href="/" class="back-btn">← チャットに戻る</a>
+            </div>
+        </div>
+
+        <div class="admin-grid">
+            <!-- BOX連携設定 -->
+            <div class="admin-section">
+                <h2>📦 BOX連携設定</h2>
+                
+                <div class="form-group">
+                    <label for="boxClientId">BOX クライアントID</label>
+                    <input type="text" id="boxClientId" placeholder="BOXアプリのクライアントID">
+                </div>
+
+                <div class="form-group">
+                    <label for="boxClientSecret">BOX クライアントシークレット</label>
+                    <input type="password" id="boxClientSecret" placeholder="BOXアプリのシークレット">
+                </div>
+
+                <div class="form-group">
+                    <label for="boxFolderId">共有フォルダID</label>
+                    <input type="text" id="boxFolderId" placeholder="ナレッジベースとして使用するフォルダID">
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-primary" onclick="connectBox()">接続テスト</button>
+                    <button class="btn-secondary" onclick="saveBoxSettings()">設定を保存</button>
+                </div>
+
+                <div id="boxStatus"></div>
+
+                <!-- BOXファイル一覧 -->
+                <div id="boxFileList" style="display: none;">
+                    <h3 style="margin-top: 25px; margin-bottom: 15px; color: #1e3a8a; font-size: 16px;">
+                        BOXファイル一覧
+                    </h3>
+                    <div class="file-list" id="boxFiles"></div>
+                </div>
+            </div>
+
+            <!-- ナレッジベース管理 -->
+            <div class="admin-section">
+                <h2>📚 ナレッジベース管理</h2>
+                
+                <div class="knowledge-stats">
+                    <div class="stat-card">
+                        <div class="stat-value" id="docCount">0</div>
+                        <div class="stat-label">ドキュメント数</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalSize">0MB</div>
+                        <div class="stat-label">合計サイズ</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="lastUpdate">--</div>
+                        <div class="stat-label">最終更新</div>
+                    </div>
+                </div>
+
+                <div class="tab-container">
+                    <div class="tab-buttons">
+                        <button class="tab-button active" onclick="switchTab('upload')">アップロード</button>
+                        <button class="tab-button" onclick="switchTab('manage')">管理</button>
+                        <button class="tab-button" onclick="switchTab('sync')">BOX同期</button>
+                    </div>
+
+                    <!-- アップロードタブ -->
+                    <div class="tab-content active" id="uploadTab">
+                        <div class="form-group">
+                            <label for="knowledgeFile">ファイルを選択</label>
+                            <input type="file" id="knowledgeFile" multiple accept=".pdf,.txt,.md,.docx">
+                        </div>
+                        <button class="btn-primary" onclick="uploadKnowledge()">アップロード</button>
+                        <div id="uploadStatus"></div>
+                    </div>
+
+                    <!-- 管理タブ -->
+                    <div class="tab-content" id="manageTab">
+                        <div class="file-list" id="knowledgeFiles">
+                            <!-- ファイル一覧がここに表示される -->
+                        </div>
+                    </div>
+
+                    <!-- BOX同期タブ -->
+                    <div class="tab-content" id="syncTab">
+                        <p style="margin-bottom: 15px; color: #64748b; font-size: 14px;">
+                            BOXフォルダから選択したファイルをナレッジベースに同期します
+                        </p>
+                        <button class="btn-primary" onclick="syncFromBox()">BOXから同期</button>
+                        <div id="syncStatus"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- システム設定 -->
+            <div class="admin-section">
+                <h2>⚙️ システム設定</h2>
+                
+                <div class="form-group">
+                    <label for="geminiApiKey">Gemini API Key</label>
+                    <input type="password" id="geminiApiKey" placeholder="Gemini APIキー">
+                </div>
+
+                <div class="form-group">
+                    <label for="openaiApiKey">OpenAI API Key</label>
+                    <input type="password" id="openaiApiKey" placeholder="OpenAI APIキー">
+                </div>
+
+                <div class="form-group">
+                    <label for="defaultModel">デフォルトモデル</label>
+                    <select id="defaultModel">
+                        <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                        <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                        <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                        <option value="gpt-4">GPT-4</option>
+                    </select>
+                </div>
+
+                <button class="btn-primary" onclick="saveSystemSettings()">設定を保存</button>
+                <div id="systemStatus"></div>
+            </div>
+
+            <!-- 利用統計 -->
+            <div class="admin-section">
+                <h2>📊 利用統計</h2>
+                
+                <div class="knowledge-stats">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalChats">0</div>
+                        <div class="stat-label">総チャット数</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="activeUsers">0</div>
+                        <div class="stat-label">アクティブユーザー</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="apiCalls">0</div>
+                        <div class="stat-label">API呼び出し</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <button class="btn-secondary" onclick="exportStats()">統計をエクスポート</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            checkConnection();
+            loadKnowledgeStats();
+            loadSystemSettings();
+            loadSystemStats();
+        });
+
+        // 接続状態チェック
+        async function checkConnection() {
+            try {
+                const response = await fetch('/api/health');
+                if (response.ok) {
+                    document.getElementById('statusDot').classList.add('connected');
+                    document.getElementById('connectionStatus').textContent = '接続済み';
+                }
+            } catch (error) {
+                console.error('Connection check failed:', error);
+            }
+        }
+
+        // タブ切り替え
+        function switchTab(tabName) {
+            // すべてのタブボタンとコンテンツを非アクティブに
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // 選択されたタブをアクティブに
+            event.target.classList.add('active');
+            document.getElementById(tabName + 'Tab').classList.add('active');
+
+            // 管理タブが選択されたら、ファイル一覧を読み込む
+            if (tabName === 'manage') {
+                loadKnowledgeFiles();
+            }
+        }
+
+        // BOX接続テスト
+        async function connectBox() {
+            const clientId = document.getElementById('boxClientId').value;
+            const clientSecret = document.getElementById('boxClientSecret').value;
+            const folderId = document.getElementById('boxFolderId').value;
+
+            if (!clientId || !clientSecret) {
+                showStatus('boxStatus', 'クライアントIDとシークレットを入力してください', 'error');
+                return;
+            }
+
+            showStatus('boxStatus', '接続中...', 'info');
+
+            try {
+                const response = await fetch('/api/admin/box/connect', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ clientId, clientSecret, folderId })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    showStatus('boxStatus', '✅ BOXに正常に接続しました', 'success');
+                    loadBoxFiles(folderId);
+                } else {
+                    showStatus('boxStatus', '❌ 接続に失敗しました: ' + data.error, 'error');
+                }
+            } catch (error) {
+                showStatus('boxStatus', '❌ エラー: ' + error.message, 'error');
+            }
+        }
+
+        // BOXファイル一覧を読み込む
+        async function loadBoxFiles(folderId) {
+            try {
+                // APIからファイル一覧を取得
+                const response = await fetch(`/api/admin/box/files/${folderId || 'root'}`);
+                const data = await response.json();
+                
+                if (data.success && data.files) {
+                    const fileListHtml = data.files.map(file => {
+                        const sizeInMB = (file.size / 1024 / 1024).toFixed(1);
+                        const sizeDisplay = file.size > 1024 * 1024 
+                            ? `${sizeInMB}MB` 
+                            : `${(file.size / 1024).toFixed(0)}KB`;
+                        
+                        return `
+                            <div class="file-item">
+                                <span>${file.name} (${sizeDisplay})</span>
+                                <div class="file-actions">
+                                    <button class="btn-download" onclick="downloadBoxFile('${file.id}', '${file.name}')">↓</button>
+                                    <button class="btn-primary" style="padding: 4px 8px; font-size: 12px;" 
+                                            onclick="syncBoxFile('${file.id}', '${file.name}')">同期</button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    document.getElementById('boxFiles').innerHTML = fileListHtml;
+                    document.getElementById('boxFileList').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Failed to load BOX files:', error);
+                document.getElementById('boxFiles').innerHTML = 
+                    '<p style="color: #dc3545; text-align: center;">ファイル一覧の取得に失敗しました</p>';
+            }
+        }
+
+        // ナレッジベース統計を読み込む
+        async function loadKnowledgeStats() {
+            try {
+                const response = await fetch('/api/knowledge');
+                const data = await response.json();
+                
+                document.getElementById('docCount').textContent = data.documents?.length || 0;
+                const totalSize = data.statistics?.totalSize || 0;
+                document.getElementById('totalSize').textContent = 
+                    (totalSize / 1024 / 1024).toFixed(1) + 'MB';
+                
+                const now = new Date();
+                document.getElementById('lastUpdate').textContent = 
+                    `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+            } catch (error) {
+                console.error('Failed to load knowledge stats:', error);
+            }
+        }
+
+        // ナレッジファイル一覧を読み込む
+        async function loadKnowledgeFiles() {
+            try {
+                const response = await fetch('/api/knowledge');
+                const data = await response.json();
+                
+                if (data.documents && data.documents.length > 0) {
+                    const filesHtml = data.documents.map(doc => `
+                        <div class="file-item">
+                            <span>${doc.title} (${(doc.size / 1024).toFixed(1)}KB)</span>
+                            <div class="file-actions">
+                                <button class="btn-delete" onclick="deleteKnowledgeFile('${doc.id}')">削除</button>
+                            </div>
+                        </div>
+                    `).join('');
+                    
+                    document.getElementById('knowledgeFiles').innerHTML = filesHtml;
+                } else {
+                    document.getElementById('knowledgeFiles').innerHTML = 
+                        '<p style="color: #64748b; text-align: center;">ファイルがありません</p>';
+                }
+            } catch (error) {
+                console.error('Failed to load knowledge files:', error);
+            }
+        }
+
+        // ナレッジファイルをアップロード
+        async function uploadKnowledge() {
+            const fileInput = document.getElementById('knowledgeFile');
+            const files = fileInput.files;
+            
+            if (files.length === 0) {
+                showStatus('uploadStatus', 'ファイルを選択してください', 'error');
+                return;
+            }
+
+            for (const file of files) {
+                showStatus('uploadStatus', `アップロード中: ${file.name}...`, 'info');
+                
+                const reader = new FileReader();
+                reader.onload = async function(e) {
+                    try {
+                        const response = await fetch('/api/knowledge/upload', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                filename: file.name,
+                                content: e.target.result
+                            })
+                        });
+
+                        const data = await response.json();
+                        if (data.success) {
+                            showStatus('uploadStatus', `✅ ${file.name} をアップロードしました`, 'success');
+                            loadKnowledgeStats();
+                        } else {
+                            showStatus('uploadStatus', `❌ ${file.name} のアップロードに失敗しました`, 'error');
+                        }
+                    } catch (error) {
+                        showStatus('uploadStatus', `❌ エラー: ${error.message}`, 'error');
+                    }
+                };
+                
+                reader.readAsText(file);
+            }
+            
+            fileInput.value = '';
+        }
+
+        // BOXから同期
+        async function syncFromBox() {
+            showStatus('syncStatus', 'BOXから同期中...', 'info');
+            
+            // 実際の実装では、選択されたBOXファイルをナレッジベースにコピー
+            setTimeout(() => {
+                showStatus('syncStatus', '✅ 3個のファイルを同期しました', 'success');
+                loadKnowledgeStats();
+            }, 2000);
+        }
+
+        // システム設定を保存
+        async function saveSystemSettings() {
+            const settings = {
+                geminiApiKey: document.getElementById('geminiApiKey').value,
+                openaiApiKey: document.getElementById('openaiApiKey').value,
+                defaultModel: document.getElementById('defaultModel').value
+            };
+
+            showStatus('systemStatus', '設定を保存中...', 'info');
+            
+            // 実際の実装では、APIに送信して.envファイルを更新
+            setTimeout(() => {
+                showStatus('systemStatus', '✅ 設定を保存しました', 'success');
+            }, 1000);
+        }
+
+        // システム設定を読み込む
+        function loadSystemSettings() {
+            // 実際の実装では、APIから現在の設定を取得
+            // ここではダミーデータ
+        }
+
+        // システム統計を読み込む
+        async function loadSystemStats() {
+            try {
+                const response = await fetch('/api/admin/stats');
+                const data = await response.json();
+                
+                document.getElementById('totalChats').textContent = data.totalChats || 0;
+                document.getElementById('activeUsers').textContent = data.activeUsers || 0;
+                document.getElementById('apiCalls').textContent = data.apiCalls || 0;
+            } catch (error) {
+                console.error('Failed to load system stats:', error);
+            }
+        }
+
+        // ステータスメッセージを表示
+        function showStatus(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.className = 'status-message ' + type;
+            element.textContent = message;
+            element.style.display = 'block';
+            
+            if (type === 'success' || type === 'error') {
+                setTimeout(() => {
+                    element.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        // 統計をエクスポート
+        function exportStats() {
+            // 実際の実装では、CSVやJSONでダウンロード
+            alert('統計データをエクスポートします（実装予定）');
+        }
+
+        // ナレッジファイルを削除
+        async function deleteKnowledgeFile(fileId) {
+            if (!confirm('このファイルを削除してもよろしいですか？')) {
+                return;
+            }
+            
+            // 実際の実装では、APIで削除
+            alert(`ファイル ${fileId} を削除しました（実装予定）`);
+            loadKnowledgeFiles();
+        }
+
+        // BOXファイルをダウンロード
+        function downloadBoxFile(fileId, filename) {
+            alert(`${filename} をダウンロードします（実装予定）`);
+        }
+
+        // BOXファイルを同期
+        async function syncBoxFile(fileId, filename) {
+            if (confirm(`${filename} をナレッジベースに同期しますか？`)) {
+                try {
+                    const response = await fetch('/api/admin/box/sync', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ fileIds: [fileId] })
+                    });
+                    
+                    const data = await response.json();
+                    if (data.success) {
+                        alert(`✅ ${filename} を同期しました`);
+                        loadKnowledgeStats(); // ナレッジベース統計を更新
+                    } else {
+                        alert(`❌ 同期に失敗しました: ${data.error || '不明なエラー'}`);
+                    }
+                } catch (error) {
+                    alert(`❌ エラー: ${error.message}`);
+                }
+            }
+        }
+
+        // BOX設定を保存
+        function saveBoxSettings() {
+            showStatus('boxStatus', '✅ BOX設定を保存しました', 'success');
+        }
+    </script>
+</body>
+</html>

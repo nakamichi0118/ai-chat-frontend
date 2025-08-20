@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>社内ナレッジ管理</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: #202123;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #8e8ea0;
+            font-size: 14px;
+        }
+        
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+        
+        .section {
+            background: #f7f7f8;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        
+        .section h2 {
+            color: #202123;
+            margin-bottom: 20px;
+            font-size: 20px;
+            border-bottom: 2px solid #10a37f;
+            padding-bottom: 10px;
+        }
+        
+        .upload-area {
+            border: 2px dashed #10a37f;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .upload-area:hover {
+            background: #f0fdf4;
+            border-color: #0e9266;
+        }
+        
+        .upload-area.dragover {
+            background: #e0f7fa;
+            border-color: #0891b2;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        
+        .document-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .document-item {
+            background: white;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.2s;
+        }
+        
+        .document-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .document-info {
+            flex: 1;
+        }
+        
+        .document-title {
+            font-weight: bold;
+            color: #202123;
+            margin-bottom: 5px;
+        }
+        
+        .document-meta {
+            font-size: 12px;
+            color: #8e8ea0;
+        }
+        
+        .document-type {
+            display: inline-block;
+            padding: 2px 8px;
+            background: #10a37f;
+            color: white;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-left: 10px;
+        }
+        
+        .delete-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .delete-btn:hover {
+            background: #dc2626;
+        }
+        
+        .quick-add {
+            margin-top: 20px;
+        }
+        
+        .quick-add textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .quick-add input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+        }
+        
+        .add-btn {
+            background: #10a37f;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .add-btn:hover {
+            background: #0e9266;
+        }
+        
+        .statistics {
+            background: #e0f2fe;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            font-size: 14px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin: 20px 30px;
+            color: #10a37f;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        
+        .message {
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+        
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 社内ナレッジ管理</h1>
+            <p>ドキュメントを追加すると、AIが自動的に参照して回答します</p>
+        </div>
+        
+        <a href="/" class="back-link">← チャットに戻る</a>
+        
+        <div class="content">
+            <div class="section">
+                <h2>📤 ドキュメント追加</h2>
+                
+                <div class="upload-area" id="uploadArea">
+                    <input type="file" id="fileInput" class="file-input" accept=".txt,.md,.pdf,.json" multiple>
+                    <div class="upload-icon">📁</div>
+                    <p><strong>ファイルをドラッグ＆ドロップ</strong></p>
+                    <p>または クリックして選択</p>
+                    <p style="font-size: 12px; color: #8e8ea0; margin-top: 10px;">
+                        対応形式: .txt, .md, .pdf, .json
+                    </p>
+                </div>
+                
+                <div class="quick-add">
+                    <h3 style="margin-bottom: 10px;">✍️ テキスト直接入力</h3>
+                    <input type="text" id="docTitle" placeholder="ドキュメント名（例：経費精算ルール）">
+                    <textarea id="docContent" placeholder="内容を入力...&#10;&#10;例：&#10;経費精算は月末締めです。&#10;領収書は必須です。&#10;上限は5万円まで。"></textarea>
+                    <button class="add-btn" onclick="addDocument()">ドキュメントを追加</button>
+                </div>
+                
+                <div id="message" class="message"></div>
+            </div>
+            
+            <div class="section">
+                <h2>📂 登録済みドキュメント</h2>
+                
+                <div class="statistics" id="statistics">
+                    <div class="stat-item">
+                        <span>総ドキュメント数:</span>
+                        <strong id="totalDocs">0</strong>
+                    </div>
+                    <div class="stat-item">
+                        <span>総容量:</span>
+                        <strong id="totalSize">0 KB</strong>
+                    </div>
+                </div>
+                
+                <div class="document-list" id="documentList">
+                    <p style="text-align: center; color: #8e8ea0; padding: 20px;">
+                        ドキュメントがありません
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // ドキュメント一覧を読み込み
+        async function loadDocuments() {
+            try {
+                const response = await fetch('http://localhost:3001/api/knowledge');
+                const data = await response.json();
+                
+                const listDiv = document.getElementById('documentList');
+                const statsDiv = document.getElementById('statistics');
+                
+                if (data.documents && data.documents.length > 0) {
+                    listDiv.innerHTML = data.documents.map(doc => `
+                        <div class="document-item">
+                            <div class="document-info">
+                                <div class="document-title">
+                                    ${doc.title}
+                                    <span class="document-type">${doc.type.toUpperCase()}</span>
+                                </div>
+                                <div class="document-meta">
+                                    サイズ: ${formatSize(doc.size)} | プレビュー: ${doc.preview}
+                                </div>
+                            </div>
+                            <button class="delete-btn" onclick="deleteDocument('${doc.id}')">削除</button>
+                        </div>
+                    `).join('');
+                    
+                    // 統計情報更新
+                    document.getElementById('totalDocs').textContent = data.statistics.totalDocuments;
+                    document.getElementById('totalSize').textContent = formatSize(data.statistics.totalSize);
+                } else {
+                    listDiv.innerHTML = '<p style="text-align: center; color: #8e8ea0; padding: 20px;">ドキュメントがありません</p>';
+                }
+            } catch (error) {
+                console.error('Error loading documents:', error);
+            }
+        }
+        
+        // ファイルサイズフォーマット
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+        
+        // ドキュメント追加
+        async function addDocument() {
+            const title = document.getElementById('docTitle').value.trim();
+            const content = document.getElementById('docContent').value.trim();
+            
+            if (!title || !content) {
+                showMessage('タイトルと内容を入力してください', 'error');
+                return;
+            }
+            
+            const filename = title.endsWith('.txt') ? title : `${title}.txt`;
+            
+            try {
+                const response = await fetch('http://localhost:3001/api/knowledge/upload', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filename, content })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage(result.message, 'success');
+                    document.getElementById('docTitle').value = '';
+                    document.getElementById('docContent').value = '';
+                    loadDocuments();
+                } else {
+                    showMessage(result.error || 'エラーが発生しました', 'error');
+                }
+            } catch (error) {
+                showMessage('アップロードに失敗しました', 'error');
+            }
+        }
+        
+        // メッセージ表示
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            
+            setTimeout(() => {
+                messageDiv.className = 'message';
+            }, 3000);
+        }
+        
+        // ドラッグ&ドロップ
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = Array.from(e.dataTransfer.files);
+            for (const file of files) {
+                await uploadFile(file);
+            }
+        });
+        
+        fileInput.addEventListener('change', async (e) => {
+            const files = Array.from(e.target.files);
+            for (const file of files) {
+                await uploadFile(file);
+            }
+            fileInput.value = '';
+        });
+        
+        // ファイルアップロード
+        async function uploadFile(file) {
+            const reader = new FileReader();
+            
+            reader.onload = async (e) => {
+                const content = e.target.result;
+                
+                try {
+                    const response = await fetch('http://localhost:3001/api/knowledge/upload', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            filename: file.name, 
+                            content: content 
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        showMessage(`${file.name}をアップロードしました`, 'success');
+                        loadDocuments();
+                    } else {
+                        showMessage(`${file.name}のアップロードに失敗しました`, 'error');
+                    }
+                } catch (error) {
+                    showMessage('アップロードエラー', 'error');
+                }
+            };
+            
+            reader.readAsText(file);
+        }
+        
+        // ドキュメント削除
+        async function deleteDocument(docId) {
+            if (!confirm('このドキュメントを削除しますか？')) return;
+            
+            // 実装は省略（APIエンドポイント追加が必要）
+            showMessage('削除機能は準備中です', 'error');
+        }
+        
+        // 初期化
+        loadDocuments();
+        setInterval(loadDocuments, 30000); // 30秒ごとに更新
+    </script>
+</body>
+</html>

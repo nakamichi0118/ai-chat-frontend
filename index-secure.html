@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob:;">
+    <title>セキュアAIアシスタント - Enterprise Edition</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css">
+    <link rel="stylesheet" href="styles-secure.css">
+</head>
+<body>
+    <div class="security-banner">
+        <span class="security-level">🔒 高セキュリティモード</span>
+        <span class="session-timer" id="sessionTimer">セッション: 30:00</span>
+        <span class="user-info" id="userInfo">ゲストユーザー</span>
+    </div>
+    
+    <div class="container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <button class="new-chat-btn" onclick="newChat()">+ 新しいチャット</button>
+                <button class="export-btn" onclick="exportChat()">📥 エクスポート</button>
+            </div>
+            
+            <div class="chat-history" id="chatHistory"></div>
+            
+            <div class="sidebar-footer">
+                <div class="model-selector">
+                    <label for="modelSelect">AIモデル:</label>
+                    <select id="modelSelect">
+                        <option value="">読み込み中...</option>
+                    </select>
+                </div>
+                
+                <div class="security-settings">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="piiDetection" checked>
+                        PII自動検出
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="auditLog" checked>
+                        監査ログ記録
+                    </label>
+                </div>
+                
+                <button class="audit-log-btn" onclick="showAuditLog()">📋 監査ログ</button>
+            </div>
+        </div>
+        
+        <div class="main-chat">
+            <div class="chat-header">
+                <h1>セキュアAIアシスタント</h1>
+                <div class="header-controls">
+                    <span class="encryption-status">🔐 暗号化通信</span>
+                    <span class="status" id="status">● 接続中</span>
+                </div>
+            </div>
+            
+            <div class="messages" id="messages">
+                <div class="welcome-message">
+                    <h2>セキュアAIアシスタントへようこそ</h2>
+                    <div class="security-features">
+                        <h3>🛡️ セキュリティ機能</h3>
+                        <ul>
+                            <li>✅ エンドツーエンド暗号化</li>
+                            <li>✅ PII（個人情報）自動検出・マスキング</li>
+                            <li>✅ 全操作の監査ログ記録</li>
+                            <li>✅ ファイルウイルススキャン</li>
+                            <li>✅ セッションタイムアウト（30分）</li>
+                            <li>✅ レート制限（DDoS対策）</li>
+                        </ul>
+                    </div>
+                    <p class="warning">⚠️ 機密情報を扱う際は、必ずPII検出機能を有効にしてください。</p>
+                </div>
+            </div>
+            
+            <div class="input-area">
+                <div class="file-upload-area" id="fileUploadArea">
+                    <input type="file" id="fileInput" multiple accept=".txt,.pdf,.doc,.docx,.csv,.json" style="display: none;">
+                    <button class="file-upload-btn" onclick="document.getElementById('fileInput').click()">
+                        📎 ファイル添付
+                    </button>
+                    <div class="file-list" id="fileList"></div>
+                </div>
+                
+                <div class="input-controls">
+                    <textarea 
+                        id="messageInput" 
+                        placeholder="メッセージを入力... (Shift+Enterで改行)"
+                        rows="1"
+                    ></textarea>
+                    <div class="input-buttons">
+                        <span class="char-count" id="charCount">0 / 4000</span>
+                        <button id="sendButton" onclick="sendMessage()">
+                            送信
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 監査ログモーダル -->
+    <div class="modal" id="auditLogModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>監査ログ</h2>
+                <button class="close-btn" onclick="closeAuditLog()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="log-filters">
+                    <input type="date" id="logDateFrom" placeholder="開始日">
+                    <input type="date" id="logDateTo" placeholder="終了日">
+                    <select id="logType">
+                        <option value="">全てのイベント</option>
+                        <option value="message">メッセージ</option>
+                        <option value="file">ファイル</option>
+                        <option value="auth">認証</option>
+                        <option value="error">エラー</option>
+                    </select>
+                    <button onclick="filterLogs()">フィルター</button>
+                </div>
+                <div class="log-content" id="logContent"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/core.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/javascript.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/python.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/java.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/sql.min.js"></script>
+    <script src="app-secure.js"></script>
+</body>
+</html>

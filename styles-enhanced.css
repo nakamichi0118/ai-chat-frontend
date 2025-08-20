@@ -1,0 +1,793 @@
+/* 拡張版スタイルシート - モダンUI */
+:root {
+    --primary-color: #10a37f;
+    --primary-dark: #0d8968;
+    --primary-light: #12b98f;
+    --secondary-color: #6b7280;
+    --danger-color: #ef4444;
+    --warning-color: #f59e0b;
+    --info-color: #3b82f6;
+    --bg-primary: #ffffff;
+    --bg-secondary: #f9fafb;
+    --bg-tertiary: #f3f4f6;
+    --text-primary: #1f2937;
+    --text-secondary: #6b7280;
+    --text-tertiary: #9ca3af;
+    --border-color: #e5e7eb;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: var(--text-primary);
+    height: 100vh;
+    overflow: hidden;
+}
+
+.container {
+    display: flex;
+    height: 100vh;
+    background: var(--bg-primary);
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.1);
+}
+
+/* サイドバー */
+.sidebar {
+    width: 280px;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    transition: width 0.3s ease;
+}
+
+.sidebar-header {
+    padding: 20px;
+    border-bottom: 1px solid var(--border-color);
+    background: white;
+}
+
+.new-chat-btn {
+    width: 100%;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.new-chat-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(16, 163, 127, 0.3);
+}
+
+.new-chat-btn:active {
+    transform: translateY(0);
+}
+
+/* チャット履歴 */
+.chat-history {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.chat-item {
+    padding: 12px 16px;
+    margin-bottom: 6px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    background: white;
+}
+
+.chat-item:hover {
+    background: var(--bg-tertiary);
+    transform: translateX(4px);
+}
+
+.chat-item-title {
+    font-size: 14px;
+    color: var(--text-primary);
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chat-item-date {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin-top: 4px;
+}
+
+.chat-delete-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.2s ease;
+    font-size: 18px;
+}
+
+.chat-item:hover .chat-delete-btn {
+    opacity: 1;
+}
+
+.chat-delete-btn:hover {
+    background: var(--danger-color);
+    color: white;
+    transform: translateY(-50%) scale(1.1);
+}
+
+/* サイドバーフッター */
+.sidebar-footer {
+    padding: 15px;
+    border-top: 1px solid var(--border-color);
+    background: white;
+}
+
+.model-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.model-selector label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+#modelSelect {
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: white;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#modelSelect:hover {
+    border-color: var(--primary-color);
+}
+
+#modelSelect:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(16, 163, 127, 0.1);
+}
+
+/* メインチャット */
+.main-chat {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: white;
+}
+
+.chat-header {
+    padding: 20px 30px;
+    background: linear-gradient(135deg, #ffffff 0%, var(--bg-secondary) 100%);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chat-header h1 {
+    font-size: 24px;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    padding: 6px 12px;
+    background: var(--bg-tertiary);
+    border-radius: 20px;
+}
+
+.status::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    animation: pulse-dot 2s infinite;
+}
+
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.status.error::before {
+    background: var(--danger-color);
+}
+
+/* メッセージエリア */
+.messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 30px;
+    background: linear-gradient(to bottom, var(--bg-secondary), white);
+}
+
+.welcome-message {
+    text-align: center;
+    padding: 60px 30px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.welcome-aiyu {
+    width: 120px;
+    height: 120px;
+    object-fit: contain;
+    margin-bottom: 20px;
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.welcome-message h2 {
+    font-size: 32px;
+    margin-bottom: 16px;
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 700;
+}
+
+.welcome-message p {
+    font-size: 16px;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    line-height: 1.6;
+}
+
+.welcome-message .info {
+    margin-top: 40px;
+    padding: 20px;
+    background: var(--bg-tertiary);
+    border-radius: 12px;
+    text-align: left;
+}
+
+.quick-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 30px;
+}
+
+.quick-actions button {
+    padding: 10px 20px;
+    background: white;
+    border: 2px solid var(--border-color);
+    border-radius: 10px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.quick-actions button:hover {
+    border-color: var(--primary-color);
+    background: var(--primary-light);
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* メッセージ */
+.message {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.message.user {
+    flex-direction: row-reverse;
+}
+
+.message-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    flex-shrink: 0;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(30, 58, 138, 0.15);
+}
+
+.message-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.message.user .message-avatar {
+    background: var(--gradient-primary);
+    color: white;
+    border: 2px solid white;
+}
+
+.message.assistant .message-avatar {
+    background: white;
+    border: 2px solid var(--primary-color);
+    padding: 3px;
+}
+
+.message-content {
+    flex: 1;
+    max-width: 70%;
+    padding: 12px 16px;
+    border-radius: 16px;
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+.message.user .message-content {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.message.assistant .message-content {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-bottom-left-radius: 4px;
+}
+
+.message-timestamp {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-top: 4px;
+}
+
+/* 入力エリア */
+.input-controls {
+    padding: 12px 20px;
+    background: linear-gradient(to bottom, var(--bg-secondary), white);
+    border-top: 1px solid var(--border-color);
+}
+
+.feature-toggles {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.toggle-btn {
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    background: white;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.3s ease;
+    font-size: 13px;
+    font-weight: 500;
+    position: relative;
+}
+
+.toggle-btn svg {
+    width: 18px;
+    height: 18px;
+    transition: transform 0.3s ease;
+}
+
+.toggle-btn:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+.toggle-btn.active {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: white;
+    border-color: var(--primary-dark);
+    box-shadow: 0 2px 8px rgba(16, 163, 127, 0.3);
+}
+
+.toggle-btn.active svg {
+    transform: scale(1.1);
+}
+
+.knowledge-status {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+    border: 1px solid #7dd3fc;
+    border-radius: 20px;
+    font-size: 12px;
+    color: #0369a1;
+    margin-bottom: 10px;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.input-area {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+}
+
+#messageInput {
+    flex: 1;
+    padding: 12px 16px;
+    border: 2px solid var(--border-color);
+    border-radius: 16px;
+    resize: none;
+    font-size: 15px;
+    min-height: 48px;
+    max-height: 120px;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+#messageInput:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px rgba(16, 163, 127, 0.1);
+}
+
+#sendButton {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: none;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-md);
+}
+
+#sendButton:hover:not(:disabled) {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(16, 163, 127, 0.4);
+}
+
+#sendButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+#sendButton svg {
+    width: 20px;
+    height: 20px;
+}
+
+.voice-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px solid var(--border-color);
+    background: white;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.voice-btn:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    transform: scale(1.1);
+}
+
+.voice-btn.recording {
+    background: var(--danger-color);
+    color: white;
+    border-color: var(--danger-color);
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    }
+}
+
+/* タイピングインジケーター */
+.typing-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+.typing-indicator .typing-dot {
+    display: block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    animation: typing-wave 1.2s infinite;
+}
+
+.typing-indicator .typing-dot:nth-child(2) {
+    animation-delay: 0.15s;
+}
+
+.typing-indicator .typing-dot:nth-child(3) {
+    animation-delay: 0.3s;
+}
+
+@keyframes typing-wave {
+    0%, 60%, 100% {
+        transform: translateY(0);
+        opacity: 0.5;
+    }
+    30% {
+        transform: translateY(-10px);
+        opacity: 1;
+    }
+}
+
+/* スクロールバー */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--text-tertiary);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+}
+
+/* コードブロックのスタイル（ChatGPT風） */
+.code-block-wrapper {
+    margin: 16px 0;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #1e293b;
+    border: 1px solid #334155;
+}
+
+.code-block-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 16px;
+    background: #0f172a;
+    border-bottom: 1px solid #334155;
+}
+
+.code-language {
+    font-size: 12px;
+    color: #94a3b8;
+    font-weight: 500;
+    text-transform: lowercase;
+}
+
+.copy-code-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: transparent;
+    border: 1px solid #475569;
+    border-radius: 4px;
+    color: #cbd5e1;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.copy-code-btn:hover {
+    background: #334155;
+    border-color: #64748b;
+    color: #f1f5f9;
+}
+
+.code-block-wrapper pre {
+    margin: 0;
+    padding: 16px;
+    overflow-x: auto;
+    background: #1e293b;
+}
+
+.code-block-wrapper code {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #f1f5f9;
+    background: transparent;
+    padding: 0;
+}
+
+/* インラインコード */
+.message-content code:not([class*="language-"]) {
+    padding: 2px 6px;
+    background: rgba(107, 114, 128, 0.2);
+    border-radius: 4px;
+    font-size: 0.9em;
+    color: var(--primary-color);
+}
+
+/* シンタックスハイライト（基本） */
+.language-javascript,
+.language-js,
+.language-python,
+.language-py,
+.language-css,
+.language-html,
+.language-json {
+    color: #e2e8f0;
+}
+
+/* ファイル添付ボタン */
+.file-attach-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px solid var(--border-color);
+    background: white;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.file-attach-btn:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    transform: scale(1.1);
+}
+
+.file-attach-btn input[type="file"] {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+/* ファイルプレビュー */
+.file-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding: 12px;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+}
+
+.file-preview-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+.file-preview-item .remove-file {
+    cursor: pointer;
+    color: var(--danger-color);
+    font-weight: bold;
+}
+
+/* レスポンシブ */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 0;
+        position: absolute;
+        z-index: 1000;
+        height: 100vh;
+    }
+    
+    .sidebar.open {
+        width: 280px;
+    }
+    
+    .message-content {
+        max-width: 85%;
+    }
+}

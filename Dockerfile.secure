@@ -1,0 +1,33 @@
+FROM nginx:alpine
+
+# セキュリティアップデート
+RUN apk update && apk upgrade && apk add --no-cache \
+    openssl \
+    && rm -rf /var/cache/apk/*
+
+# SSL証明書の生成（開発用自己署名証明書）
+RUN mkdir -p /etc/nginx/ssl && \
+    openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+    -keyout /etc/nginx/ssl/private.key \
+    -out /etc/nginx/ssl/certificate.crt \
+    -subj "/C=JP/ST=Tokyo/L=Tokyo/O=SecureChat/CN=localhost"
+
+# Nginxユーザーの権限設定
+RUN chown -R nginx:nginx /var/cache/nginx && \
+    chown -R nginx:nginx /var/log/nginx && \
+    chown -R nginx:nginx /etc/nginx/conf.d && \
+    touch /var/run/nginx.pid && \
+    chown -R nginx:nginx /var/run/nginx.pid
+
+# アプリケーションファイルのコピー
+COPY --chown=nginx:nginx . /usr/share/nginx/html/
+
+# Nginx設定
+COPY --chown=nginx:nginx nginx-secure.conf /etc/nginx/nginx.conf
+
+# 非rootユーザーで実行
+USER nginx
+
+EXPOSE 80 443
+
+CMD ["nginx", "-g", "daemon off;"]

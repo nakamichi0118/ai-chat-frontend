@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>アイユーくんAIチャット</title>
+    <link rel="icon" type="image/png" href="/aiyu-icons/こんにちは.png">
+    <link rel="stylesheet" href="styles-enhanced.css?v=20250812_1130">
+    <link rel="stylesheet" href="aiyu-styles-v2.css?v=20250812_1145">
+    <script src="config.js?v=20250814_1315_fix"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <button class="new-chat-btn" id="newChatButton" onclick="newChat()">+ 新しいチャット</button>
+                <button class="export-btn" onclick="exportChat()" style="margin-top: 8px; width: 100%; padding: 8px; background: #2196F3; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">
+                    📥 チャットをエクスポート
+                </button>
+            </div>
+            <div class="chat-history" id="chatHistory">
+            </div>
+            <div class="sidebar-footer">
+                <div class="model-selector">
+                    <label for="modelSelect">モデル選択:</label>
+                    <select id="modelSelect">
+                        <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                        <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                        <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                        <option value="gpt-4">GPT-4</option>
+                        <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                        <option value="gpt-4o">GPT-4o</option>
+                        <option value="gpt-4o-mini">GPT-4o Mini</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div class="main-chat">
+            <div class="chat-header">
+                <div class="header-content">
+                    <img src="/aiyu-icons/こんにちは.png" alt="アイユー" class="aiyu-logo" style="width: 24px; height: 24px;">
+                    <h1>アイユーくんAIチャット</h1>
+                </div>
+                <img src="/iucglog.png" alt="会社ロゴ" class="company-logo" style="height: 32px;">
+            </div>
+            
+            <div class="messages" id="messages">
+                <div class="welcome-message">
+                    <h2 style="color: #1e3a8a; font-weight: 700;"><img src="/aiyu-icons/こんにちは.png" alt="アイユーくん" style="width: 32px; height: 32px; vertical-align: middle; margin-right: 8px;">アイユーくんAIチャットへようこそ！</h2>
+                    <p style="color: #3b5998;">なんでもきいてくださいワン！お手伝いしますワン🐾</p>
+                    <p class="info" style="color: #64748b; font-size: 12px;">※ 安心して使ってくださいワン</p>
+                </div>
+            </div>
+            
+            <div class="input-controls">
+                <div class="feature-toggles">
+                    <button class="toggle-btn" id="knowledgeToggle" onclick="toggleKnowledge()" title="ナレッジベース参照">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span class="toggle-label">ナレッジ</span>
+                    </button>
+                    <button class="toggle-btn" id="voiceToggle" onclick="toggleVoice()" title="音声入力">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 1C10.34 1 9 2.34 9 4V12C9 13.66 10.34 15 12 15C13.66 15 15 13.66 15 12V4C15 2.34 13.66 1 12 1Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M19 10V12C19 15.86 15.86 19 12 19C8.14 19 5 15.86 5 12V10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M12 19V23" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M8 23H16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span class="toggle-label">音声</span>
+                    </button>
+                    <button class="toggle-btn" id="speakToggle" onclick="toggleSpeak()" title="読み上げ">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                            <path d="M11 5L6 9H2V15H6L11 19V5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M19.07 4.93C20.94 6.8 22 9.3 22 12C22 14.7 20.94 17.2 19.07 19.07M15.54 8.46C16.48 9.4 17 10.65 17 12C17 13.35 16.48 14.6 15.54 15.54" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span class="toggle-label">読み上げ</span>
+                    </button>
+                    <button class="toggle-btn" onclick="window.location.href='meeting.html'" title="議事録作成（ベータ版）">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                            <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M14 2V8H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M16 13H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M16 17H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M10 9H9H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span class="toggle-label">議事録β</span>
+                    </button>
+                </div>
+                <div class="knowledge-status" id="knowledgeStatus" style="display: none;">
+                    <span class="status-icon">📚</span>
+                    <span class="status-text">ナレッジベース接続中...</span>
+                </div>
+            </div>
+            <div class="input-area">
+                <div id="filePreview" class="file-preview" style="display: none;"></div>
+                <button class="file-attach-btn" id="fileAttachBtn" title="ファイルを添付">
+                    <input type="file" id="fileInput" multiple accept="image/*,.pdf,.txt,.md,.js,.py,.java,.cpp,.c,.h,.json,.xml,.csv">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <textarea 
+                    id="messageInput" 
+                    placeholder="メッセージを入力... (Shift+Enterで改行)"
+                    rows="1"
+                ></textarea>
+                <button id="sendButton">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <button id="voiceButton" class="voice-btn" onclick="startVoiceInput()" style="display: none;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10" fill="red" class="recording-indicator" style="display: none;"/>
+                        <path d="M12 1C10.34 1 9 2.34 9 4V12C9 13.66 10.34 15 12 15C13.66 15 15 13.66 15 12V4C15 2.34 13.66 1 12 1Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        // PDF.jsのワーカー設定
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
+    <script src="app-enhanced.js?v=20250814_1315_fix"></script>
+</body>
+</html>

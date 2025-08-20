@@ -1,0 +1,2 @@
+/api/* https://your-api-gateway-url.amazonaws.com/prod/api/:splat 200
+/* /index.html 200

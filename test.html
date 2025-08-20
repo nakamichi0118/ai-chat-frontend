@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Page</title>
+</head>
+<body>
+    <h1>Test Page</h1>
+    <div id="messages">Messages will appear here</div>
+    <button onclick="testFunction()">Test Button</button>
+    
+    <script>
+        console.log('1. Script started loading');
+        
+        function testFunction() {
+            console.log('Test button clicked');
+            document.getElementById('messages').innerHTML = 'Button clicked!';
+        }
+        
+        console.log('2. Script loaded successfully');
+        
+        // Test basic DOM access
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('3. DOM Content Loaded');
+            const messagesDiv = document.getElementById('messages');
+            if (messagesDiv) {
+                console.log('4. Messages div found');
+                messagesDiv.innerHTML = 'Page loaded successfully!';
+            } else {
+                console.log('4. ERROR: Messages div not found');
+            }
+        });
+        
+        console.log('5. Event listener added');
+    </script>
+</body>
+</html>
