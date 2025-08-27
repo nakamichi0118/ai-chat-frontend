@@ -616,11 +616,9 @@ async function sendMessage() {
             throw new Error(`Network response was not ok: ${response.status}`);
         }
         
-        console.log('13. Starting SSE processing...');
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let assistantMessage = '';
-        let chunkCount = 0;
+        // JSONレスポンスかSSEレスポンスかを判定
+        const contentType = response.headers.get('content-type');
+        console.log('13. Response content-type:', contentType);
         
         removeTypingIndicator(typingDiv);
         const assistantDiv = addMessage('assistant', '');
@@ -628,34 +626,63 @@ async function sendMessage() {
         console.log('14. Assistant div created:', assistantDiv ? 'OK' : 'Failed');
         console.log('15. Content div:', contentDiv ? 'OK' : 'Failed');
         
-        while (true) {
-            const { value, done } = await reader.read();
-            if (done) break;
+        let assistantMessage = '';
+        
+        if (contentType && contentType.includes('application/json')) {
+            // JSON形式のレスポンスを処理（新しいWorker用）
+            console.log('Processing JSON response...');
+            const data = await response.json();
+            console.log('JSON response data:', data);
             
-            const chunk = decoder.decode(value, { stream: true });
-            chunkCount++;
-            console.log(`16. Chunk ${chunkCount} (length: ${chunk.length}):`, chunk.substring(0, 200));
-            const lines = chunk.split('\n');
+            if (data.response) {
+                assistantMessage = data.response;
+                contentDiv.innerHTML = renderMarkdown(assistantMessage);
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            } else if (data.error) {
+                throw new Error(data.error);
+            }
+        } else {
+            // SSE形式のレスポンスを処理（既存のサーバー用）
+            console.log('Processing SSE response...');
             
-            for (const line of lines) {
-                if (line.startsWith('data: ')) {
-                    const jsonStr = line.slice(6);
-                    if (jsonStr === '[DONE]') {
-                        break;
-                    }
-                    try {
-                        const data = JSON.parse(jsonStr);
-                        if (data.content) {
-                            assistantMessage += data.content;
-                            console.log(`17. Received content (total: ${assistantMessage.length}):`, data.content.substring(0, 50));
-                            contentDiv.innerHTML = renderMarkdown(assistantMessage);
-                            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                        } else if (data.error) {
-                            console.error('18. Server error:', data.error);
+            // まずJSONレスポンスかチェック
+            const text = await response.text();
+            console.log('Raw response text:', text.substring(0, 200));
+            
+            try {
+                // JSONとしてパース可能かチェック
+                const data = JSON.parse(text);
+                if (data.response) {
+                    assistantMessage = data.response;
+                    contentDiv.innerHTML = renderMarkdown(assistantMessage);
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                } else if (data.error) {
+                    throw new Error(data.error);
+                }
+            } catch (jsonError) {
+                // JSONでない場合はSSEとして処理
+                const lines = text.split('\n');
+                
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        const jsonStr = line.slice(6);
+                        if (jsonStr === '[DONE]') {
+                            break;
                         }
-                    } catch (e) {
-                        console.error('19. Error parsing SSE data:', e);
-                        console.error('20. Problematic JSON string:', jsonStr);
+                        try {
+                            const data = JSON.parse(jsonStr);
+                            if (data.content) {
+                                assistantMessage += data.content;
+                                console.log(`17. Received content (total: ${assistantMessage.length}):`, data.content.substring(0, 50));
+                                contentDiv.innerHTML = renderMarkdown(assistantMessage);
+                                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                            } else if (data.error) {
+                                console.error('18. Server error:', data.error);
+                            }
+                        } catch (e) {
+                            console.error('19. Error parsing SSE data:', e);
+                            console.error('20. Problematic JSON string:', jsonStr);
+                        }
                     }
                 }
             }
@@ -1420,6 +1447,8 @@ function restoreSettings() {
 
 // ステータス設定
 function setStatus(status) {
+    if (!statusElement) return; // statusElement が存在しない場合は何もしない
+    
     if (status === 'error') {
         statusElement.textContent = '● 接続エラー';
         statusElement.className = 'status error';
