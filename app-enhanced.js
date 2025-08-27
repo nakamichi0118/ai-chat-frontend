@@ -3,9 +3,37 @@ function generateChatId() {
     return 'chat_' + Date.now() + '_' + Math.random().toString(36).substring(2);
 }
 
+// タイトル生成・保存・復元機能
+function generateChatTitle(message) {
+    // メッセージの最初の30文字程度をタイトルとして使用
+    const title = message.length > 30 ? message.substring(0, 30) + '...' : message;
+    return title.replace(/\n/g, ' '); // 改行を空白に置換
+}
+
+function updatePageTitle(title) {
+    if (title) {
+        document.title = `${title} - アイユーくんAIチャット`;
+        currentChatTitle = title;
+        localStorage.setItem('currentChatTitle', title);
+    } else {
+        document.title = 'アイユーくんAIチャット';
+        currentChatTitle = null;
+        localStorage.removeItem('currentChatTitle');
+    }
+}
+
+function restorePageTitle() {
+    const savedTitle = localStorage.getItem('currentChatTitle');
+    if (savedTitle) {
+        currentChatTitle = savedTitle;
+        document.title = `${savedTitle} - アイユーくんAIチャット`;
+    }
+}
+
 // 拡張版 - 履歴保持・社内リソース対応
 let messages = [];
 let currentChatId = generateChatId();
+let currentChatTitle = null; // チャットタイトル保存用
 let chatHistory = {};
 let isGenerating = false;
 let availableModels = [];
@@ -17,6 +45,7 @@ let isKnowledgeEnabled = false;
 let isVoiceEnabled = false;
 let isSpeakEnabled = false;
 let isPersonalityEnabled = false; // アイユーくん人格機能（デフォルトOFF）
+let isResearchModeEnabled = false; // リサーチモード（ウェブ検索強化）
 
 // 音声認識と合成
 let recognition = null;
@@ -65,6 +94,9 @@ function initializeApp() {
     
     // 保存された設定を復元
     restoreSettings();
+    
+    // タイトルを復元
+    restorePageTitle();
     
     setInterval(checkConnection, 30000);
     setInterval(saveToLocalStorage, 10000); // 10秒ごとに自動保存
@@ -237,6 +269,9 @@ function startNewChat() {
     // 新しいチャットIDを生成
     currentChatId = generateChatId();
     messages = [];
+    
+    // タイトルをリセット
+    updatePageTitle(null);
     
     // UIをクリア
     messagesDiv.innerHTML = '';
@@ -506,6 +541,13 @@ async function sendMessage() {
         console.log('3. modelSelect:', modelSelect);
         console.log('4. modelSelect.value:', modelSelect ? modelSelect.value : 'N/A');
         console.log('5. availableModels:', availableModels);
+        
+        // 最初のメッセージの場合、タイトルを設定
+        if (messages.length === 0 && !currentChatTitle) {
+            const title = generateChatTitle(message);
+            updatePageTitle(title);
+            console.log('📝 Chat title set to:', title);
+        }
     
         // モデル選択（デフォルト値を設定）
         let selectedModel = modelSelect ? modelSelect.value : 'gemini-1.5-flash';
@@ -543,6 +585,7 @@ async function sendMessage() {
             history: messages.slice(-10),
             useKnowledge: Boolean(isKnowledgeEnabled),
             usePersonality: Boolean(isPersonalityEnabled),
+            useResearch: Boolean(isResearchModeEnabled),
             userProfile: userProfile,
             files: attachedFiles // 添付ファイルを含める
         };
@@ -1266,6 +1309,23 @@ window.togglePersonality = function() {
     localStorage.setItem('personalityEnabled', String(isPersonalityEnabled));
 }
 
+window.toggleResearchMode = function() {
+    isResearchModeEnabled = !isResearchModeEnabled;
+    const btn = document.getElementById('researchToggle');
+    
+    console.log('リサーチモード:', isResearchModeEnabled);
+    
+    if (isResearchModeEnabled) {
+        btn.classList.add('active');
+        console.log('✅ リサーチモード: ON');
+    } else {
+        btn.classList.remove('active');
+        console.log('⚪ リサーチモード: OFF');
+    }
+    
+    localStorage.setItem('researchModeEnabled', String(isResearchModeEnabled));
+}
+
 // 音声認識の初期化
 function initializeSpeechRecognition() {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
@@ -1376,17 +1436,19 @@ function speakText(text) {
 
 // 初期設定の復元 - initializeApp内に統合
 function restoreSettings() {
-    // 保存された設定を復元（ナレッジ・人格はデフォルトOFF）
+    // 保存された設定を復元（ナレッジ・人格・リサーチはデフォルトOFF）
     const knowledgeEnabled = localStorage.getItem('knowledgeEnabled') === 'true';
     const voiceEnabled = localStorage.getItem('voiceEnabled') === 'true';
     const speakEnabled = localStorage.getItem('speakEnabled') === 'true';
     const personalityEnabled = localStorage.getItem('personalityEnabled') === 'true';
+    const researchEnabled = localStorage.getItem('researchModeEnabled') === 'true';
     
     console.log('初期設定復元:');
     console.log('  ナレッジ:', knowledgeEnabled);
     console.log('  音声:', voiceEnabled);
     console.log('  読み上げ:', speakEnabled);
     console.log('  人格:', personalityEnabled);
+    console.log('  リサーチ:', researchEnabled);
     
     // 直接状態を設定（イベントループを避けるため）
     // ナレッジ設定
@@ -1435,6 +1497,17 @@ function restoreSettings() {
             personalityBtn.classList.add('active');
         } else {
             personalityBtn.classList.remove('active');
+        }
+    }
+    
+    // リサーチモード設定
+    isResearchModeEnabled = researchEnabled;
+    const researchBtn = document.getElementById('researchToggle');
+    if (researchBtn) {
+        if (researchEnabled) {
+            researchBtn.classList.add('active');
+        } else {
+            researchBtn.classList.remove('active');
         }
     }
     
