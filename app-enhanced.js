@@ -1152,11 +1152,11 @@ function loadChat(chatId) {
         addMessage(msg.role, msg.content, false);
     });
     
-    // クリックしたチャットのlastUpdatedを更新
-    chat.lastUpdated = new Date().toISOString();
+    // チャットをクリックしても順番は変更しない（ユーザーからの要望）
+    // chat.lastUpdated = new Date().toISOString();
     
     saveToLocalStorage();
-    renderChatHistory();  // 並び順を更新
+    // renderChatHistory();  // 並び順の更新は不要
 }
 
 // チャット削除
