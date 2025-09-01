@@ -99,6 +99,15 @@
                         </svg>
                         <span class="toggle-label">リサーチ</span>
                     </button>
+                    <button class="toggle-btn" id="promptsToggle" onclick="togglePromptsPanel()" title="税理士業務プロンプト集">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                            <path d="M9 5H2V19H22V5H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M15 3H9V5H15V3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M8 12H16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M8 15H14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span class="toggle-label">プロンプト</span>
+                    </button>
                 </div>
                 <div class="knowledge-status" id="knowledgeStatus" style="display: none;">
                     <span class="status-icon">📚</span>
@@ -130,6 +139,90 @@
                         <path d="M12 1C10.34 1 9 2.34 9 4V12C9 13.66 10.34 15 12 15C13.66 15 15 13.66 15 12V4C15 2.34 13.66 1 12 1Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </button>
+            </div>
+        </div>
+        <!-- プロンプト集パネル -->
+        <div id="promptsPanel" class="prompts-panel" style="display: none;">
+            <div class="prompts-header">
+                <h3>税理士業務プロンプト集</h3>
+                <button class="close-btn" onclick="togglePromptsPanel()">×</button>
+            </div>
+            <div class="prompts-content">
+                <div class="prompts-category">
+                    <h4>📊 顧問業務</h4>
+                    <div class="prompt-item" onclick="insertPrompt('記帳代行の業務フローを効率化するための具体的な改善提案を5つ教えてください。')">
+                        記帳代行の効率化
+                    </div>
+                    <div class="prompt-item" onclick="insertPrompt('月次決算のチェックリストを作成してください。確認すべき勘定科目と具体的な確認ポイントを含めてください。')">
+                        月次決算チェックリスト
+                    </div>
+                    <div class="prompt-item" onclick="insertPrompt('法人税申告書の作成手順を初心者向けに分かりやすく説明してください。必要な書類と注意点も含めてください。')">
+                        法人税申告の手順
+                    </div>
+                    <div class="prompt-item" onclick="insertPrompt('消費税の課税・非課税・不課税・免税の判定基準を具体例を交えて説明してください。')">
+                        消費税区分の判定
+                    </div>
+                </div>
+                <div class="prompts-category">
+                    <h4>🏠 相続業務</h4>
+                    <div class="prompt-item" onclick="insertPrompt('相続税申告に必要な書類一覧を、取得先と取得期限を含めて作成してください。')">
+                        相続税申告の必要書類
+                    </div>
+                    <div class="prompt-item" onclick="insertPrompt('小規模宅地等の特例の適用要件と計算方法を具体例で説明してください。')">
+                        小規模宅地等の特例
+                    </div>
+                    <div class="prompt-item" onclick="insertPrompt('遺産分割協議書の作成ポイントと必須記載事項を教えてください。')">
+                        遺産分割協議書の作成
+                    </div>
+                    <div class="prompt-item" onclick="insertPrompt('相続税の概算計算方法と、節税対策として検討すべき5つのポイントを教えてください。')">
+                        相続税の節税対策
+                    </div>
+                </div>
+                <div class="prompts-category">
+                    <h4>💼 バックオフィス業務</h4>
+                    <div class="prompt-item" onclick="insertPrompt('給与計算業務のマニュアルを作成してください。社会保険料と税金の計算方法を含めてください。')">
+                        給与計算マニュアル
+                    </div>
+                    <div class="prompt-item" onclick="insertPrompt('年末調整の業務フローと必要書類、締切スケジュールを一覧にしてください。')">
+                        年末調整の業務フロー
+                    </div>
+                    <div class="prompt-item" onclick="insertPrompt('経費精算のルールと承認フローのテンプレートを作成してください。')">
+                        経費精算ルール
+                    </div>
+                    <div class="prompt-item" onclick="insertPrompt('新入社員向けの税務基礎知識研修カリキュラムを作成してください。')">
+                        新人研修カリキュラム
+                    </div>
+                </div>
+                <div class="prompts-category">
+                    <h4>📈 経営支援</h4>
+                    <div class="prompt-item" onclick="insertPrompt('財務分析レポートのテンプレートを作成してください。主要な経営指標と改善提案を含めてください。')">
+                        財務分析レポート
+                    </div>
+                    <div class="prompt-item" onclick="insertPrompt('資金繰り表の作成方法と、資金ショートを防ぐための5つのポイントを教えてください。')">
+                        資金繰り管理
+                    </div>
+                    <div class="prompt-item" onclick="insertPrompt('事業計画書の作成支援として、必要な項目と記載すべき内容を詳しく説明してください。')">
+                        事業計画書の作成
+                    </div>
+                    <div class="prompt-item" onclick="insertPrompt('補助金・助成金の申請サポートのため、主要な制度と申請要件をまとめてください。')">
+                        補助金・助成金情報
+                    </div>
+                </div>
+                <div class="prompts-category">
+                    <h4>🔍 調査・確認</h4>
+                    <div class="prompt-item" onclick="insertPrompt('税務調査の対応マニュアルを作成してください。準備すべき書類と想定質問への回答例を含めてください。')">
+                        税務調査対応
+                    </div>
+                    <div class="prompt-item" onclick="insertPrompt('最新の税制改正のポイントと、クライアントへの影響を分かりやすくまとめてください。')">
+                        税制改正の影響
+                    </div>
+                    <div class="prompt-item" onclick="insertPrompt('インボイス制度の実務対応チェックリストを作成してください。')">
+                        インボイス制度対応
+                    </div>
+                    <div class="prompt-item" onclick="insertPrompt('電子帳簿保存法の要件と実務対応方法を説明してください。')">
+                        電子帳簿保存法
+                    </div>
+                </div>
             </div>
         </div>
     </div>

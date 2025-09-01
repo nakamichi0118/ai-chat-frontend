@@ -299,7 +299,28 @@ function loadFromLocalStorage() {
     try {
         const savedHistory = localStorage.getItem('chatHistory');
         if (savedHistory) {
-            chatHistory = JSON.parse(savedHistory);
+            const parsedHistory = JSON.parse(savedHistory);
+            
+            // 古いデータ形式（配列）を新しい形式（オブジェクト）に変換
+            chatHistory = {};
+            Object.entries(parsedHistory).forEach(([id, data]) => {
+                if (Array.isArray(data)) {
+                    // 古い形式：配列
+                    chatHistory[id] = {
+                        title: data[0]?.content?.substring(0, 30) + '...' || '新しいチャット',
+                        messages: data,
+                        timestamp: new Date().toISOString(),
+                        lastUpdated: new Date().toISOString()
+                    };
+                } else if (data && data.messages) {
+                    // 新しい形式：オブジェクト
+                    chatHistory[id] = data;
+                } else {
+                    // 不明な形式はスキップ
+                    console.warn('Unknown chat format for ID:', id);
+                }
+            });
+            
             renderChatHistory();
         }
         
@@ -1324,6 +1345,38 @@ window.toggleResearchMode = function() {
     }
     
     localStorage.setItem('researchModeEnabled', String(isResearchModeEnabled));
+}
+
+// プロンプトパネル表示切り替え
+window.togglePromptsPanel = function() {
+    const panel = document.getElementById('promptsPanel');
+    const btn = document.getElementById('promptsToggle');
+    
+    if (panel.style.display === 'none' || !panel.style.display) {
+        panel.style.display = 'flex';
+        btn.classList.add('active');
+        console.log('📝 プロンプトパネル: 開く');
+    } else {
+        panel.style.display = 'none';
+        btn.classList.remove('active');
+        console.log('📝 プロンプトパネル: 閉じる');
+    }
+}
+
+// プロンプトを入力欄に挿入
+window.insertPrompt = function(promptText) {
+    const messageInput = document.getElementById('messageInput');
+    if (messageInput) {
+        messageInput.value = promptText;
+        messageInput.style.height = 'auto';
+        messageInput.style.height = messageInput.scrollHeight + 'px';
+        messageInput.focus();
+        
+        // パネルを閉じる
+        togglePromptsPanel();
+        
+        console.log('✍️ プロンプト挿入:', promptText.substring(0, 50) + '...');
+    }
 }
 
 // 音声認識の初期化
